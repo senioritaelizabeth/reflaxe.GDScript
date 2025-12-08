@@ -2,7 +2,7 @@
 
 <a href="https://discord.com/channels/162395145352904705/1052688097592225904"><img src="https://discordapp.com/api/guilds/162395145352904705/widget.png?style=shield" alt="Reflaxe Thread"/></a> [![Button Click]][Link]
 
-_Compile Haxe to GDScript 2.0 like any other Haxe target. Made using [Reflaxe](https://github.com/RobertBorghese/reflaxe)._
+_Compile Haxe to GDScript 2.0 like any other Haxe target. Made using [Reflaxe](https://github.com/SomeRanDev/reflaxe)._
 
 <!---------------------------------------------------------------------------->
 [Button Click]: https://img.shields.io/badge/Documentation-Click_here!-yellow
