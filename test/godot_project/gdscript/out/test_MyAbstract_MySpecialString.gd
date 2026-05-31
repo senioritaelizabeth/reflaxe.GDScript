@@ -14,8 +14,7 @@ static func substr(this1: String, i: int, len = null) -> String:
 	return tempResult
 
 static func toNormal(t: String, value: String) -> String:
-	var this1: String = value
-	var tempResult: String = this1
+	var tempResult: String = value
 
 	return tempResult
 

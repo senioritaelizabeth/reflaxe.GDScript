@@ -20,7 +20,7 @@ static func test() -> void:
 		var cond: bool = !((b as Variant) is A)
 		assert(cond, "Test assert failed.")
 
-	var c: C = (b as C)
+	var c: C = Std.downcast(b, C)
 
 	assert(c == null, "Test assert failed.")
 

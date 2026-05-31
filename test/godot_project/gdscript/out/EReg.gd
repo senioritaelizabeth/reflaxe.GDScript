@@ -1,111 +1,31 @@
 class_name EReg
 
-var regObj
-var regexStr: String
-var m = null
-
 func _init(r: String, opt: String) -> void:
-	self.regObj = RegEx.new()
-	self.regexStr = r
-
-func reset() -> void:
-	self.regObj.clear.call()
-	self.regObj.compile.call(self.regexStr)
+	assert(false, str(haxe_exceptions_NotImplementedException.new("Regular expressions are not implemented for this platform", null, {
+		"fileName": "EReg.hx",
+		"lineNumber": 48,
+		"className": "EReg",
+		"methodName": "new"
+	})))
 
 func _match(s: String) -> bool:
-	self.reset()
-	self.m = self.regObj.search.call(s)
-
-	return !(!self.m)
+	return false
 
 func matched(n: int) -> String:
-	if (self.m != null):
-		return self.m.get_string.call(n)
-
-	return ""
-
-func matchedLeft() -> String:
-	assert(false, str("EReg.matchedLeft not implemented for GDScript."))
-
-	return ""
+	return null
 
 func matchedRight() -> String:
-	assert(false, str("EReg.matchedRight not implemented for GDScript."))
-
-	return ""
+	return null
 
 func matchedPos() -> Variant:
-	if (self.m == null):
-		return {
-			"pos": -1,
-			"len": -1
-		}
-
-	return {
-		"pos": self.m.get_start.call(),
-		"len": self.m.get_end.call() - self.m.get_start.call()
-	}
+	return null
 
 func matchSub(s: String, pos: int, len: int = -1) -> bool:
-	self.reset()
+	return false
 
-	var tempNumber
-
-	if (len == -1):
-		tempNumber = -1
-	else:
-		tempNumber = s.length() - pos + len
-
-	self.m = self.regObj.search.call(s, pos, tempNumber)
-
-	return !(!self.m)
-
-func split(s: String) -> Array[String]:
-	if (s == null || s.length() <= 0):
-		return ([s] as Array[String])
-
-	var result: Array[String] = ([] as Array[String])
-	var index: int = 0
-
-	while (true):
-		if (self.matchSub(s, index, -1)):
-			var pos: Variant = self.matchedPos()
-			var tempString
-			if true:
-				var endIndex: int = pos.get("pos")
-				if (endIndex < 0):
-					tempString = s.substr(index)
-				else:
-					tempString = s.substr(index, endIndex - index)
-			result.push_back(tempString)
-			if (pos.get("pos") + pos.get("len") <= index):
-				break
-			index = pos.get("pos") + pos.get("len")
-			if (index >= s.length()):
-				break
-		else:
-			var tempString1
-			if true:
-				var endIndex: int = -1
-				if (endIndex < 0):
-					tempString1 = s.substr(index)
-				else:
-					tempString1 = s.substr(index, endIndex - index)
-			result.push_back(tempString1)
-			break
-
-	return result
+func split(s: String) -> Array:
+	return null
 
 func replace(s: String, by: String) -> String:
-	return self.regObj.sub.call(s, by)
-
-func map(s: String, f) -> String:
-	assert(false, str("EReg.map not implemented for GDScript."))
-
-	return ""
-
-static func escape(s: String) -> String:
-	assert(false, str("EReg.escape not implemented for GDScript."))
-
-	return ""
+	return null
 

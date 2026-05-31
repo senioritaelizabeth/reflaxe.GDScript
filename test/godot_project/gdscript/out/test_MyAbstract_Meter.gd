@@ -12,5 +12,5 @@ static func __get(this1: float) -> float:
 	return this1
 
 static func toString(this1: float) -> String:
-	return str(this1) + "m"
+	return this1 + "m"
 

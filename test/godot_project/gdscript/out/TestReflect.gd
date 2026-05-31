@@ -11,16 +11,16 @@ static func test() -> void:
 	var cls: MyClass = MyClass.new()
 
 	if true:
-		var cond: bool = "num" in obj
+		var cond: bool = obj in "num"
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = !"dog" in obj
+		var cond: bool = !obj in "dog"
 		assert(cond, "Test assert failed.")
 	if true:
 		var cond: bool = obj.get("str") == "String"
 		assert(cond, "Test assert failed.")
 
-	Reflect.setField(obj, "num", 444)
+	obj.set("num", 444)
 
 	if true:
 		var cond: bool = obj.get("num") == 444
@@ -39,10 +39,10 @@ static func test() -> void:
 		return a + 123
 
 	if true:
-		var cond: bool = _func.callv(([100] as Array[Variant])) == 223
+		var cond: bool = null.callv(_func) == 223
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = Reflect.fields(cls).size() == 4
+		var cond: bool = cls.get_property_list().map(func(x): return x.name).length == 4
 		assert(cond, "Test assert failed.")
 	if true:
 		var cond: bool = !(obj as Variant) is Callable
@@ -53,14 +53,14 @@ static func test() -> void:
 	if true:
 		var cond: bool = Reflect.compare(12, 14) == -1
 		assert(cond, "Test assert failed.")
-
-	assert(_func == _func, "Test assert failed.")
-
+	if true:
+		var cond: bool = Reflect.compareMethods(_func, _func)
+		assert(cond, "Test assert failed.")
 	if true:
 		var cond: bool = !(obj as Variant) is Object
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = (obj as Variant) is Dictionary
+		var cond: bool = Reflect.isEnumValue(obj)
 		assert(cond, "Test assert failed.")
 
 	var obj2 = Reflect.copy(obj)

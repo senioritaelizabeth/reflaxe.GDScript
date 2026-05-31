@@ -1,13 +1,13 @@
 class_name haxe_iterators_ArrayKeyValueIterator
 
 var current: int = 0
-var array: Array[Variant]
+var array: Array
 
-func _init(array2: Array[Variant]) -> void:
+func _init(array2: Array) -> void:
 	self.array = array2
 
 func hasNext() -> bool:
-	return self.current < self.array.size()
+	return self.current < self.array.length
 
 func next() -> Variant:
 	self.current += 1

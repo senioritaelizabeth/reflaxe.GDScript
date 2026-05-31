@@ -7,7 +7,7 @@ static func arrayAccess(this1: Variant, key: String):
 	return this1.get(key)
 
 static func arrayWrite(this1: Variant, key: String, value):
-	Reflect.setField(this1, key, value)
+	this1.set(key, value)
 
 	return value
 

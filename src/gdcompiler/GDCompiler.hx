@@ -23,6 +23,7 @@ import reflaxe.preprocessors.implementations.everything_is_expr.EverythingIsExpr
 
 import gdcompiler.config.Define;
 import gdcompiler.config.Meta;
+import gdcompiler.GDScriptStdTranslate;
 
 import gdcompiler.subcompilers.EnumCompiler;
 import gdcompiler.subcompilers.TypeCompiler;
@@ -153,7 +154,46 @@ class GDCompiler extends reflaxe.DirectToStringCompiler {
 			setExtraFile("resource_export_list.txt", usedResources.join(", "));
 		}
 		#end
+
+		// Always generate haxe_Exception.gd for exception support
+		generateHaxeException();
 	}
+
+	/**
+		Generates a basic haxe_Exception.gd file for exception support.
+	**/
+	function generateHaxeException() {
+		if(!extraFileExists("haxe_Exception.gd")) {
+			setExtraFile("haxe_Exception.gd", 'var _message: String
+var _previous: Variant
+var _native: Variant
+
+func _init(message: String, previous = null, native = null) -> void:
+	_message = message
+	_previous = previous
+	_native = native
+
+func get_message() -> String:
+	return _message
+
+func get_previous() -> Variant:
+	return _previous
+
+func get_native() -> Variant:
+	return _native
+
+func unwrap() -> Variant:
+	return _native
+
+func toString() -> String:
+	return _message
+
+func details() -> String:
+	return _message
+');
+		}
+	}
+
 
 	/**
 		Get the name of the Godot plugin's main (or "script") file.
@@ -554,7 +594,7 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 				}
 				if(result == null) {
 					final varName = compileVarName(field.name);
-					
+
 					// Prepend "wrap_" to prevent conflicts with virtuals like "_ready" and "_process".
 					if(wrapField) {
 						"wrap_" + varName;
@@ -1218,6 +1258,14 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 			return result;
 		}
 
+		// Check for static std translations (Std.*, Math.*, Reflect.*, Sys.*)
+		final translatedStatic = tryTranslateStaticCall(calledExpr, arguments);
+		if(translatedStatic != null) {
+			final result = new StringBuf();
+			result.add(translatedStatic);
+			return result;
+		}
+
 		// Check FieldAccess 
 		final code = switch(calledExpr.expr) {
 			case TField(_, fa): {
@@ -1477,6 +1525,34 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 			case TConst(c): c != TSuper;
 			case TParenthesis(e2) | TMeta(_, e2): isCallableVar(e2);
 			case _: true;
+		}
+	}
+
+	/**
+		Tries to translate static std calls like Std.string(), Math.abs(), etc.
+	**/
+	function tryTranslateStaticCall(calledExpr: TypedExpr, arguments: Array<TypedExpr>): Null<String> {
+		final argStrings = arguments.map(e -> compileExpression(e));
+		
+		return switch(calledExpr.expr) {
+			case TField(_, fa): {
+				switch(fa) {
+					case FStatic(clsRef, cfRef): {
+						final cls = clsRef.get();
+						final cf = cfRef.get();
+						final className = cls.pack.join(".") + (cls.pack.length > 0 ? "." : "") + cls.name;
+						GDScriptStdTranslate.translateStaticCall(className, cf.name, argStrings);
+					}
+					case FInstance(clsRef, _, cfRef): {
+						final cls = clsRef.get();
+						final cf = cfRef.get();
+						final className = cls.pack.join(".") + (cls.pack.length > 0 ? "." : "") + cls.name;
+						GDScriptStdTranslate.translateStaticCall(className, cf.name, argStrings);
+					}
+					case _: null;
+				}
+			}
+			case _: null;
 		}
 	}
 

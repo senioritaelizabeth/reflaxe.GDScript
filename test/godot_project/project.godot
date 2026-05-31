@@ -10,10 +10,13 @@ config_version=5
 
 [application]
 
-config/name="Haxe-to-GDScript-Test"
-run/main_scene="res://test_scene.tscn"
-config/features=PackedStringArray("4.4", "GL Compatibility")
+config/name="Reflaxe Test"
+config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
+
+[physics]
+
+3d/physics_engine="Jolt Physics"
 
 [rendering]
 

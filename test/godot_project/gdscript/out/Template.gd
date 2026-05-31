@@ -7,7 +7,7 @@ static var expr_int: EReg = EReg.new("^[0-9]+$", "")
 static var expr_float: EReg = EReg.new("^([+-]?)(?=\\d|,\\d)\\d*(,\\d*)?([Ee]([+-]?\\d+))?$", "")
 static var globals = {
 }
-static var hxKeepArrayIterator: haxe_iterators_ArrayIterator = haxe_iterators_ArrayIterator.new(([] as Array[Variant]))
+static var hxKeepArrayIterator: haxe_iterators_ArrayIterator = haxe_iterators_ArrayIterator.new(([] as Array))
 
 var expr: Variant
 var context
@@ -43,17 +43,9 @@ func execute(context2, macros2 = null) -> String:
 func resolve(v: String):
 	if (v == "__current__"):
 		return self.context
-
-	var v2 = self.context
-	var tempBool: bool = (v2 as Variant) is Object
-
-	if (tempBool):
+	if ((self.context as Variant) is Object):
 		var value = Reflect.getProperty(self.context, v)
-		var tempRight
-		if true:
-			var o = self.context
-			tempRight = v in o
-		if (value != null || tempRight):
+		if (value != null || self.context in v):
 			return value
 
 	var _this: haxe_ds_List = self.stack
@@ -66,16 +58,10 @@ func resolve(v: String):
 		tempVar = val
 		var ctx = tempVar
 		var value = Reflect.getProperty(ctx, v)
-		if (value != null || v in ctx):
+		if (value != null || ctx in v):
 			return value
 
-	var tempResult
-
-	if true:
-		var o = globals
-		tempResult = o.get(v)
-
-	return tempResult
+	return globals.get(v)
 
 func parseTokens(data: String) -> haxe_ds_List:
 	var tokens: haxe_ds_List = haxe_ds_List.new()
@@ -88,13 +74,7 @@ func parseTokens(data: String) -> haxe_ds_List:
 				"s": true,
 				"l": null
 			})
-		var tempLeft
-		var index: int = p.get("pos")
-		if (index >= 0 && index < data.length()):
-			tempLeft = data.unicode_at(index)
-		else:
-			tempLeft = null
-		if (tempLeft == 58):
+		if (data.charCodeAt(p.get("pos")) == 58):
 			tokens.add({
 				"p": data.substr(p.get("pos") + 2, p.get("len") - 4),
 				"s": false,
@@ -104,15 +84,10 @@ func parseTokens(data: String) -> haxe_ds_List:
 			continue
 		var parp: int = p.get("pos") + p.get("len")
 		var npar: int = 1
-		var params: Array[String] = ([] as Array[String])
+		var params: Array = ([] as Array)
 		var part: String = ""
 		while (true):
-			var tempMaybeNumber
-			if (parp >= 0 && parp < data.length()):
-				tempMaybeNumber = data.unicode_at(parp)
-			else:
-				tempMaybeNumber = null
-			var c = tempMaybeNumber
+			var c = data.charCodeAt(parp)
 			parp += 1
 			if (c == 40):
 				npar += 1
@@ -125,19 +100,19 @@ func parseTokens(data: String) -> haxe_ds_List:
 					if (c == null):
 						assert(false, str("Unclosed macro parenthesis"))
 			if (c == 44 && npar == 1):
-				params.push_back(part)
+				params.push(part)
 				part = ""
 			else:
 				part += char(c)
-		params.push_back(part)
+		params.push(part)
 		tokens.add({
 			"p": splitter.matched(2),
 			"s": false,
 			"l": params
 		})
-		data = data.substr(parp, data.length() - parp)
+		data = data.substr(parp, data.length - parp)
 
-	if (data.length() > 0):
+	if (data.length > 0):
 		tokens.add({
 			"p": data,
 			"s": true,
@@ -171,8 +146,8 @@ func parse(tokens: haxe_ds_List) -> Variant:
 	if (t.get("l") != null):
 		var pe: haxe_ds_List = haxe_ds_List.new()
 		var _g: int = 0
-		var _g1: Array[String] = t.get("l")
-		while (_g < _g1.size()):
+		var _g1: Array = t.get("l")
+		while (_g < _g1.length):
 			var p2: String = _g1[_g]
 			_g += 1
 			pe.add(self.parseBlock(self.parseTokens(p2)))
@@ -180,7 +155,7 @@ func parse(tokens: haxe_ds_List) -> Variant:
 
 	var kwdEnd = func(kwd: String) -> int:
 		var pos: int = -1
-		var length: int = kwd.length()
+		var length: int = kwd.length
 		if (p.substr(0, length) == kwd):
 			pos = length
 			var _g_s
@@ -188,14 +163,14 @@ func parse(tokens: haxe_ds_List) -> Variant:
 			var s: String = p.substr(length)
 			_g_offset = 0
 			_g_s = s
-			while (_g_offset < _g_s.length()):
+			while (_g_offset < _g_s.length):
 				var tempNumber
 				var s2: String = _g_s
 				var tempNumber1
 				_g_offset += 1
 				tempNumber1 = _g_offset - 1
 				var index: int = tempNumber1
-				tempNumber = s2.unicode_at.call(index)
+				tempNumber = s2.cca.call(index)
 				var c: int = tempNumber
 				if (c == 32):
 					pos += 1
@@ -205,7 +180,7 @@ func parse(tokens: haxe_ds_List) -> Variant:
 	var pos: int = kwdEnd.call("if")
 
 	if (pos > 0):
-		p = p.substr(pos, p.length() - pos)
+		p = p.substr(pos, p.length - pos)
 		var e = self.parseExpr(p)
 		var eif: Variant = self.parseBlock(tokens)
 		var t2 = tokens.first()
@@ -223,14 +198,14 @@ func parse(tokens: haxe_ds_List) -> Variant:
 				if (t2 == null || t2.get("p") != "end"):
 					assert(false, str("Unclosed 'else'"))
 			else:
-				t2.set("p", t2.get("p").substr(4, t2.get("p").length() - 4))
+				t2.set("p", t2.get("p").substr(4, t2.get("p").length - 4))
 				eelse = self.parse(tokens)
 		return { "_index": 2, "expr": e, "eif": eif, "eelse": eelse }
 
 	var pos2: int = kwdEnd.call("foreach")
 
 	if (pos2 >= 0):
-		p = p.substr(pos2, p.length() - pos2)
+		p = p.substr(pos2, p.length - pos2)
 		var e = self.parseExpr(p)
 		var efor: Variant = self.parseBlock(tokens)
 		var t2 = tokens.pop()
@@ -244,7 +219,6 @@ func parse(tokens: haxe_ds_List) -> Variant:
 
 func parseExpr(data: String):
 	var l: haxe_ds_List = haxe_ds_List.new()
-	var expr2: String = data
 
 	while (expr_splitter._match(data)):
 		var p: Variant = expr_splitter.matchedPos()
@@ -257,16 +231,16 @@ func parseExpr(data: String):
 		var p2: String = expr_splitter.matched(0)
 		l.add({
 			"p": p2,
-			"s": p2.find("\"") >= 0
+			"s": p2.indexOf("\"") >= 0
 		})
 		data = expr_splitter.matchedRight()
 
-	if (data.length() != 0):
+	if (data.length != 0):
 		var _g_s
 		var _g_offset
 		_g_offset = 0
 		_g_s = data
-		while (_g_offset < _g_s.length()):
+		while (_g_offset < _g_s.length):
 			var _g_value
 			var _g_key
 			_g_key = _g_offset
@@ -278,7 +252,7 @@ func parseExpr(data: String):
 					_g_offset += 1
 					tempNumber = _g_offset - 1
 				var index: int = tempNumber
-				tempRight = s.unicode_at.call(index)
+				tempRight = s.cca.call(index)
 			_g_value = tempRight
 			var i: int = _g_key
 			var c: int = _g_value
@@ -305,14 +279,8 @@ func makeConst(v: String):
 	expr_trim._match(v)
 	v = expr_trim.matched(1)
 
-	var tempMaybeNumber
-
-	if (0 >= 0 && 0 < v.length()):
-		tempMaybeNumber = v.unicode_at(0)
-	else:
-		tempMaybeNumber = null
-	if ((tempMaybeNumber) == 34):
-		var _str: String = v.substr(1, v.length() - 2)
+	if (v.charCodeAt(0) == 34):
+		var _str: String = v.substr(1, v.length - 2)
 		return func() -> String:
 			return _str
 	if (expr_int._match(v)):
@@ -348,10 +316,7 @@ func makePath(e, l: haxe_ds_List):
 	f = expr_trim.matched(1)
 
 	return self.makePath(func():
-		var tempResult
-		var o = e.call()
-		tempResult = o.get(f)
-		return tempResult, l)
+		return e.call().get(f), l)
 
 func makeExpr(l: haxe_ds_List):
 	return self.makePath(self.makeExpr2(l), l)
@@ -365,14 +330,14 @@ func skipSpaces(l: haxe_ds_List) -> void:
 		var s: String = p.get("p")
 		_g_offset = 0
 		_g_s = s
-		while (_g_offset < _g_s.length()):
+		while (_g_offset < _g_s.length):
 			var tempNumber
 			var s2: String = _g_s
 			var tempNumber1
 			_g_offset += 1
 			tempNumber1 = _g_offset - 1
 			var index: int = tempNumber1
-			tempNumber = s2.unicode_at.call(index)
+			tempNumber = s2.cca.call(index)
 			var c: int = tempNumber
 			if (c != 32):
 				return
@@ -547,14 +512,10 @@ func run(e: Variant) -> void:
 			var m: String = _g
 			var params: haxe_ds_List = _g1
 			if true:
-				var tempVar
-				if true:
-					var o = self.macros
-					tempVar = o.get(m)
-				var v = tempVar
-				var pl: Array[Variant] = []
+				var v = self.macros.get(m)
+				var pl: Array = Array.new()
 				var old: StringBuf = self.buf
-				pl.push_back(self.resolve)
+				pl.push(self.resolve)
 				if true:
 					var _g_head
 					var head: haxe_ds__List_ListNode = params.h
@@ -570,18 +531,14 @@ func run(e: Variant) -> void:
 							var _g2: String = p.v
 							if true:
 								var v2: String = _g2
-								pl.push_back(self.resolve(v2))
+								pl.push(self.resolve(v2))
 						else:
 							self.buf = StringBuf.new()
 							self.run(p)
-							pl.push_back(self.buf.b)
+							pl.push(self.buf.b)
 				self.buf = old
 				if true:
 					var _this: StringBuf = self.buf
-					var tempVar1
-					if true:
-						var o = self.macros
-						tempVar1 = v.callv(pl)
-					var x: String = str(tempVar1)
+					var x: String = str(self.macros.callv(v))
 					_this.b += str(x)
 

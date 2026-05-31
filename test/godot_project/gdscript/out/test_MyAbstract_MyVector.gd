@@ -47,5 +47,5 @@ static func __get(this1: MyPoint3) -> MyPoint3:
 	return this1
 
 static func toString(this1: MyPoint3) -> String:
-	return "(" + str(this1.x) + "," + str(this1.y) + "," + str(this1.z) + ")"
+	return "(" + this1.x + "," + this1.y + "," + this1.z + ")"
 

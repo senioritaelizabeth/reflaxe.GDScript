@@ -4,9 +4,7 @@ func _init() -> void:
 	pass
 
 static func _new(value: String) -> String:
-	var this1: String = value
-
-	return this1
+	return value
 
 static func test(this1: String):
 	var fn = func() -> String:

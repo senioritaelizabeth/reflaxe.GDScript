@@ -12,24 +12,24 @@ static func test() -> void:
 		var cond: bool = count == 10
 		assert(cond, "Test assert failed.")
 
-	var list: Array[TestStaticVar] = ([] as Array[TestStaticVar])
+	var list: Array = ([] as Array)
 
-	list.push_back(TestStaticVar.new())
-	list.push_back(TestStaticVar.new())
-	list.push_back(TestStaticVar.new())
-	list.push_back(TestStaticVar.new())
-	list.push_back(TestStaticVar.new())
-	list.push_back(TestStaticVar.new())
-	list.push_back(TestStaticVar.new())
-	list.push_back(TestStaticVar.new())
-	list.push_back(TestStaticVar.new())
-	list.push_back(TestStaticVar.new())
+	list.push(TestStaticVar.new())
+	list.push(TestStaticVar.new())
+	list.push(TestStaticVar.new())
+	list.push(TestStaticVar.new())
+	list.push(TestStaticVar.new())
+	list.push(TestStaticVar.new())
+	list.push(TestStaticVar.new())
+	list.push(TestStaticVar.new())
+	list.push(TestStaticVar.new())
+	list.push(TestStaticVar.new())
 
 	if true:
 		var cond: bool = count == 20
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = OtherClass._str.length() == 0
+		var cond: bool = OtherClass._str.length == 0
 		assert(cond, "Test assert failed.")
 
 	OtherClass.add.call()
@@ -37,13 +37,13 @@ static func test() -> void:
 	OtherClass.add.call()
 
 	if true:
-		var cond: bool = OtherClass._str.length() == 3
+		var cond: bool = OtherClass._str.length == 3
 		assert(cond, "Test assert failed.")
 
 	OtherClass.clear()
 
 	if true:
-		var cond: bool = OtherClass._str.length() == 0
+		var cond: bool = OtherClass._str.length == 0
 		assert(cond, "Test assert failed.")
 
 	var old = OtherClass.add

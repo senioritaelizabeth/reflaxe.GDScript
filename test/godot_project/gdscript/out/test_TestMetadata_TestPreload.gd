@@ -7,3 +7,4 @@ func _init() -> void:
 
 func _func() -> void:
 	INSTANCE
+

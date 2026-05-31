@@ -78,7 +78,7 @@ static func test() -> void:
 		var cond: bool = 3 == 3
 		assert(cond, "Test assert failed.")
 
-	var arr2: Array[int] = []
+	var arr2: Array = []
 	var _bool: bool = true
 
 	assert(_bool, "Test assert failed.")

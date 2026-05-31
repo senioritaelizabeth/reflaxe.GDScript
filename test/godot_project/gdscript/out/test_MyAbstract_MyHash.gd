@@ -17,12 +17,12 @@ static func __get(this1: haxe_ds_StringMap, k: String):
 static func toString(this1: haxe_ds_StringMap) -> String:
 	return this1.toString()
 
-static func fromStringArray(arr: Array[String]) -> haxe_ds_StringMap:
+static func fromStringArray(arr: Array) -> haxe_ds_StringMap:
 	var this1: haxe_ds_StringMap = haxe_ds_StringMap.new()
 	var tempMyHash: haxe_ds_StringMap = this1
 	var i: int = 0
 
-	while (i < arr.size()):
+	while (i < arr.length):
 		var tempIndex
 		i += 1
 		tempIndex = i - 1
@@ -35,12 +35,12 @@ static func fromStringArray(arr: Array[String]) -> haxe_ds_StringMap:
 
 	return tempMyHash
 
-static func fromArray(arr: Array[Variant]) -> haxe_ds_StringMap:
+static func fromArray(arr: Array) -> haxe_ds_StringMap:
 	var this1: haxe_ds_StringMap = haxe_ds_StringMap.new()
 	var tempMyHash: haxe_ds_StringMap = this1
 	var i: int = 0
 
-	while (i < arr.size()):
+	while (i < arr.length):
 		var tempIndex
 		i += 1
 		tempIndex = i - 1

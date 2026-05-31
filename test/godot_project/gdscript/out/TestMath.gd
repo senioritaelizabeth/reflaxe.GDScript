@@ -5,51 +5,43 @@ func _init() -> void:
 
 static func test() -> void:
 	if true:
-		var tempLeft
-		if true:
-			var v: float = 2 * pow(PI, 2)
-			tempLeft = int(ceil(v))
-		var cond: bool = tempLeft == 20
+		var cond: bool = ceil(2 * pow(Math._PI, 2)) == 20
 		assert(cond, "Test assert failed.")
 	if true:
 		var cond: bool = abs(-3) == 3
 		assert(cond, "Test assert failed.")
-
-	assert(3 == 3, "Test assert failed.")
-	assert(1 == 1, "Test assert failed.")
-
 	if true:
-		var tempLeft1
-		if true:
-			var v: float = exp(1.0)
-			tempLeft1 = int(ceil(v))
-		var cond: bool = tempLeft1 == 3
+		var cond: bool = ceil(2.1) == 3
 		assert(cond, "Test assert failed.")
 	if true:
-		var tempLeft2
-		if true:
-			var v: float = exp(1.0)
-			tempLeft2 = int(floor(v))
-		var cond: bool = tempLeft2 == 2
+		var cond: bool = ceil(0.9) == 1
+		assert(cond, "Test assert failed.")
+	if true:
+		var cond: bool = ceil(exp(1.0)) == 3
+		assert(cond, "Test assert failed.")
+	if true:
+		var cond: bool = floor(exp(1.0)) == 2
+		assert(cond, "Test assert failed.")
+	if true:
+		var cond: bool = floor(99.9) == 99
 		assert(cond, "Test assert failed.")
 
-	assert(99 == 99, "Test assert failed.")
 	assert(1.0 == 1.0, "Test assert failed.")
 
 	if true:
 		var cond: bool = is_finite(12)
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = is_nan(NAN)
+		var cond: bool = is_nan(Math.NaN)
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = !is_finite(INF)
+		var cond: bool = !is_finite(Math.POSITIVE_INFINITY)
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = !is_finite(-INF)
+		var cond: bool = !is_finite(Math.NEGATIVE_INFINITY)
 		assert(cond, "Test assert failed.")
 	if true:
-		var input: float = sin(PI)
+		var input: float = sin(Math._PI)
 		assert(abs(0.0 - input) < 0.0001, "Test assert failed.")
 	if true:
 		var input: float = cos(0)

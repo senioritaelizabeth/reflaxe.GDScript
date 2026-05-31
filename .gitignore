@@ -1,7 +1,8 @@
 # Test
 test/gdscript/out
 test/project.godot
-
+*.gd
+project.godot
 # Reflaxe Build
 _Build/
 
@@ -16,3 +17,4 @@ Submit.bat
 # Projects and Personal Utilities
 Build.bat
 ReflaxeGDScript.code-workspace
+_Build

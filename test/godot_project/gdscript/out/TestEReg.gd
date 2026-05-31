@@ -25,7 +25,7 @@ static func test() -> void:
 		var cond: bool = EReg.new("abc", "").matchSub("abcabc", 1, -1)
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = EReg.new("\\s*,\\s*", "").split("one,two ,three, four") == (["one", "two", "three", "four"] as Array[String])
+		var cond: bool = EReg.new("\\s*,\\s*", "").split("one,two ,three, four") == (["one", "two", "three", "four"] as Array)
 		assert(cond, "Test assert failed.")
 	if true:
 		var cond: bool = reg.replace("123abc", "456") == "123456"

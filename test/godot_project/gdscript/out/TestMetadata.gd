@@ -5,3 +5,4 @@ func _init() -> void:
 
 func _func() -> void:
 	TestPreload.INSTANCE
+

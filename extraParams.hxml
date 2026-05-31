@@ -1,3 +1,4 @@
 -D gdscript
 -D retain-untyped-meta
+-cp std/gdscript
 --macro gdcompiler.GDCompilerInit.Start()

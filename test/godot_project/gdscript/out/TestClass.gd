@@ -11,7 +11,7 @@ func _init() -> void:
 			"lineNumber": 10,
 			"className": "test.TestClass",
 			"methodName": "new",
-			"customParams": ([self.b] as Array[Variant])
+			"customParams": ([self.b] as Array)
 		})
 
 static func test() -> void:

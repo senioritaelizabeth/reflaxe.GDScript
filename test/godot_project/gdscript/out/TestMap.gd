@@ -94,45 +94,37 @@ static func test() -> void:
 		var cond: bool = map.__get("foo") == 1
 		assert(cond, "Test assert failed.")
 
-	var values: Array[int] = ([] as Array[int])
+	var values: Array = ([] as Array)
 
 	if true:
 		var val: Variant = map.iterator()
 		while (val.get("hasNext").call()):
 			var val2: int = val.get("next").call()
-			values.push_back(val2)
+			values.push(val2)
 	if true:
-		var cond: bool = values.size() == 3
+		var cond: bool = values.length == 3
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([1, 2, 3] as Array[int]).has(values[0])
+		var cond: bool = ([1, 2, 3] as Array).contains(values[0])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([1, 2, 3] as Array[int]).has(values[1])
+		var cond: bool = ([1, 2, 3] as Array).contains(values[1])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([1, 2, 3] as Array[int]).has(values[2])
+		var cond: bool = ([1, 2, 3] as Array).contains(values[2])
 		assert(cond, "Test assert failed.")
 
-	var keys: Array[String] = (["foo", "bar", "baz"] as Array[String])
+	var keys: Array = (["foo", "bar", "baz"] as Array)
 
 	if true:
 		var key: Variant = map.keys()
 		while (key.get("hasNext").call()):
 			var key2: String = key.get("next").call()
 			if true:
-				var tempBool
-				if true:
-					var index: int = keys.find(key2)
-					if (index >= 0):
-						keys.remove_at(index)
-						tempBool = true
-					else:
-						tempBool = false
-				var cond: bool = tempBool
+				var cond: bool = keys.remove(key2)
 				assert(cond, "Test assert failed.")
 
-	assert(keys == ([] as Array[String]), "Test assert failed.")
+	assert(keys == ([] as Array), "Test assert failed.")
 
 	if true:
 		var cond: bool = map.remove("bar") == true
@@ -165,46 +157,34 @@ static func test() -> void:
 	var tempArray
 
 	if true:
-		var _g: Array[int] = ([] as Array[int])
+		var _g: Array = ([] as Array)
 		if true:
-			var map6: Variant = tempMap
-			var _g_keys: Variant = map6.keys()
-			while (_g_keys.get("hasNext").call()):
-				var _g_value
-				var _g_key
-				var key: int = _g_keys.get("next").call()
-				_g_value = map6.__get(key)
-				_g_key = key
-				var k: int = _g_key
-				var v: String = _g_value
-				_g.push_back(k)
+			var _g1: Variant = tempMap.keyValueIterator()
+			while (_g1.get("hasNext").call()):
+				var _g2: Variant = _g1.get("next").call()
+				var k: int = _g2.get("key")
+				var v: String = _g2.get("value")
+				_g.push(k)
 		tempArray = _g
 
-	tempArray.sort_custom(func(a: int, b: int) -> bool:
-		return Reflect.compare(a, b) < 0)
-	assert(tempArray == ([1, 2, 3] as Array[int]), "Test assert failed.")
+	tempArray.sort(Reflect.compare)
+	assert(tempArray == ([1, 2, 3] as Array), "Test assert failed.")
 
 	var tempArray1
 
 	if true:
-		var _g: Array[String] = ([] as Array[String])
+		var _g: Array = ([] as Array)
 		if true:
-			var map6: Variant = tempMap
-			var _g_keys: Variant = map6.keys()
-			while (_g_keys.get("hasNext").call()):
-				var _g_value
-				var _g_key
-				var key: int = _g_keys.get("next").call()
-				_g_value = map6.__get(key)
-				_g_key = key
-				var k: int = _g_key
-				var v: String = _g_value
-				_g.push_back(v)
+			var _g1: Variant = tempMap.keyValueIterator()
+			while (_g1.get("hasNext").call()):
+				var _g2: Variant = _g1.get("next").call()
+				var k: int = _g2.get("key")
+				var v: String = _g2.get("value")
+				_g.push(v)
 		tempArray1 = _g
 
-	tempArray1.sort_custom(func(a: String, b: String) -> bool:
-		return Reflect.compare(a, b) < 0)
-	assert(tempArray1 == (["2", "4", "6"] as Array[String]), "Test assert failed.")
+	tempArray1.sort(Reflect.compare)
+	assert(tempArray1 == (["2", "4", "6"] as Array), "Test assert failed.")
 
 	var map6: haxe_ds_IntMap = haxe_ds_IntMap.new()
 
@@ -273,45 +253,37 @@ static func test() -> void:
 		var cond: bool = map6.__get(1) == 1
 		assert(cond, "Test assert failed.")
 
-	var values3: Array[int] = ([] as Array[int])
+	var values3: Array = ([] as Array)
 
 	if true:
 		var val: Variant = map6.iterator()
 		while (val.get("hasNext").call()):
 			var val2: int = val.get("next").call()
-			values3.push_back(val2)
+			values3.push(val2)
 	if true:
-		var cond: bool = values3.size() == 3
+		var cond: bool = values3.length == 3
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([1, 2, 3] as Array[int]).has(values3[0])
+		var cond: bool = ([1, 2, 3] as Array).contains(values3[0])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([1, 2, 3] as Array[int]).has(values3[1])
+		var cond: bool = ([1, 2, 3] as Array).contains(values3[1])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([1, 2, 3] as Array[int]).has(values3[2])
+		var cond: bool = ([1, 2, 3] as Array).contains(values3[2])
 		assert(cond, "Test assert failed.")
 
-	var keys3: Array[int] = ([1, 2, 3] as Array[int])
+	var keys3: Array = ([1, 2, 3] as Array)
 
 	if true:
 		var key: Variant = map6.keys()
 		while (key.get("hasNext").call()):
 			var key2: int = key.get("next").call()
 			if true:
-				var tempBool1
-				if true:
-					var index: int = keys3.find(key2)
-					if (index >= 0):
-						keys3.remove_at(index)
-						tempBool1 = true
-					else:
-						tempBool1 = false
-				var cond: bool = tempBool1
+				var cond: bool = keys3.remove(key2)
 				assert(cond, "Test assert failed.")
 
-	assert(keys3 == ([] as Array[int]), "Test assert failed.")
+	assert(keys3 == ([] as Array), "Test assert failed.")
 
 	if true:
 		var cond: bool = map6.remove(2) == true
@@ -344,46 +316,34 @@ static func test() -> void:
 	var tempArray2
 
 	if true:
-		var _g: Array[int] = ([] as Array[int])
+		var _g: Array = ([] as Array)
 		if true:
-			var map8: Variant = tempMap1
-			var _g_keys: Variant = map8.keys()
-			while (_g_keys.get("hasNext").call()):
-				var _g_value
-				var _g_key
-				var key: int = _g_keys.get("next").call()
-				_g_value = map8.__get(key)
-				_g_key = key
-				var k: int = _g_key
-				var v: int = _g_value
-				_g.push_back(k)
+			var _g1: Variant = tempMap1.keyValueIterator()
+			while (_g1.get("hasNext").call()):
+				var _g2: Variant = _g1.get("next").call()
+				var k: int = _g2.get("key")
+				var v: int = _g2.get("value")
+				_g.push(k)
 		tempArray2 = _g
 
-	tempArray2.sort_custom(func(a: int, b: int) -> bool:
-		return Reflect.compare(a, b) < 0)
-	assert(tempArray2 == ([1, 2, 3] as Array[int]), "Test assert failed.")
+	tempArray2.sort(Reflect.compare)
+	assert(tempArray2 == ([1, 2, 3] as Array), "Test assert failed.")
 
 	var tempArray3
 
 	if true:
-		var _g: Array[int] = ([] as Array[int])
+		var _g: Array = ([] as Array)
 		if true:
-			var map8: Variant = tempMap1
-			var _g_keys: Variant = map8.keys()
-			while (_g_keys.get("hasNext").call()):
-				var _g_value
-				var _g_key
-				var key: int = _g_keys.get("next").call()
-				_g_value = map8.__get(key)
-				_g_key = key
-				var k: int = _g_key
-				var v: int = _g_value
-				_g.push_back(v)
+			var _g1: Variant = tempMap1.keyValueIterator()
+			while (_g1.get("hasNext").call()):
+				var _g2: Variant = _g1.get("next").call()
+				var k: int = _g2.get("key")
+				var v: int = _g2.get("value")
+				_g.push(v)
 		tempArray3 = _g
 
-	tempArray3.sort_custom(func(a: int, b: int) -> bool:
-		return Reflect.compare(a, b) < 0)
-	assert(tempArray3 == ([2, 4, 6] as Array[int]), "Test assert failed.")
+	tempArray3.sort(Reflect.compare)
+	assert(tempArray3 == ([2, 4, 6] as Array), "Test assert failed.")
 
 	var map8: haxe_ds_ObjectMap = haxe_ds_ObjectMap.new()
 	var a: ClassWithHashCode = ClassWithHashCode.new(1)
@@ -423,55 +383,45 @@ static func test() -> void:
 	var tempArray4
 
 	if true:
-		var _g: Array[ClassWithHashCode] = ([] as Array[ClassWithHashCode])
+		var _g: Array = ([] as Array)
 		if true:
-			var map9: Variant = map8
-			var _g_keys: Variant = map9.keys()
-			while (_g_keys.get("hasNext").call()):
-				var _g_value
-				var _g_key
-				var key: ClassWithHashCode = _g_keys.get("next").call()
-				_g_value = map9.__get(key)
-				_g_key = key
-				var k: ClassWithHashCode = _g_key
-				var v: int = _g_value
-				_g.push_back(k)
+			var _g1: Variant = map8.keyValueIterator()
+			while (_g1.get("hasNext").call()):
+				var _g2: Variant = _g1.get("next").call()
+				var k: ClassWithHashCode = _g2.get("key")
+				var v: int = _g2.get("value")
+				_g.push(k)
 		tempArray4 = _g
 	if true:
-		var cond: bool = ([a, b, c] as Array[ClassWithHashCode]).has(tempArray4[0])
+		var cond: bool = ([a, b, c] as Array).contains(tempArray4[0])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([a, b, c] as Array[ClassWithHashCode]).has(tempArray4[1])
+		var cond: bool = ([a, b, c] as Array).contains(tempArray4[1])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([a, b, c] as Array[ClassWithHashCode]).has(tempArray4[2])
+		var cond: bool = ([a, b, c] as Array).contains(tempArray4[2])
 		assert(cond, "Test assert failed.")
 
 	var tempArray5
 
 	if true:
-		var _g: Array[int] = ([] as Array[int])
+		var _g: Array = ([] as Array)
 		if true:
-			var map9: Variant = map8
-			var _g_keys: Variant = map9.keys()
-			while (_g_keys.get("hasNext").call()):
-				var _g_value
-				var _g_key
-				var key: ClassWithHashCode = _g_keys.get("next").call()
-				_g_value = map9.__get(key)
-				_g_key = key
-				var k: ClassWithHashCode = _g_key
-				var v: int = _g_value
-				_g.push_back(v)
+			var _g1: Variant = map8.keyValueIterator()
+			while (_g1.get("hasNext").call()):
+				var _g2: Variant = _g1.get("next").call()
+				var k: ClassWithHashCode = _g2.get("key")
+				var v: int = _g2.get("value")
+				_g.push(v)
 		tempArray5 = _g
 	if true:
-		var cond: bool = ([1, 2, 3] as Array[int]).has(tempArray5[0])
+		var cond: bool = ([1, 2, 3] as Array).contains(tempArray5[0])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([1, 2, 3] as Array[int]).has(tempArray5[1])
+		var cond: bool = ([1, 2, 3] as Array).contains(tempArray5[1])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([1, 2, 3] as Array[int]).has(tempArray5[2])
+		var cond: bool = ([1, 2, 3] as Array).contains(tempArray5[2])
 		assert(cond, "Test assert failed.")
 
 	var copied3: haxe_ds_ObjectMap = map8.copy()
@@ -506,45 +456,37 @@ static func test() -> void:
 		var cond: bool = map8.__get(a) == 1
 		assert(cond, "Test assert failed.")
 
-	var values6: Array[int] = ([] as Array[int])
+	var values6: Array = ([] as Array)
 
 	if true:
 		var val: Variant = map8.iterator()
 		while (val.get("hasNext").call()):
 			var val2: int = val.get("next").call()
-			values6.push_back(val2)
+			values6.push(val2)
 	if true:
-		var cond: bool = values6.size() == 3
+		var cond: bool = values6.length == 3
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([1, 2, 3] as Array[int]).has(values6[0])
+		var cond: bool = ([1, 2, 3] as Array).contains(values6[0])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([1, 2, 3] as Array[int]).has(values6[1])
+		var cond: bool = ([1, 2, 3] as Array).contains(values6[1])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([1, 2, 3] as Array[int]).has(values6[2])
+		var cond: bool = ([1, 2, 3] as Array).contains(values6[2])
 		assert(cond, "Test assert failed.")
 
-	var keys6: Array[ClassWithHashCode] = ([a, b, c] as Array[ClassWithHashCode])
+	var keys6: Array = ([a, b, c] as Array)
 
 	if true:
 		var key: Variant = map8.keys()
 		while (key.get("hasNext").call()):
 			var key2: ClassWithHashCode = key.get("next").call()
 			if true:
-				var tempBool2
-				if true:
-					var index: int = keys6.find(key2)
-					if (index >= 0):
-						keys6.remove_at(index)
-						tempBool2 = true
-					else:
-						tempBool2 = false
-				var cond: bool = tempBool2
+				var cond: bool = keys6.remove(key2)
 				assert(cond, "Test assert failed.")
 
-	assert(keys6 == ([] as Array[ClassWithHashCode]), "Test assert failed.")
+	assert(keys6 == ([] as Array), "Test assert failed.")
 
 	if true:
 		var cond: bool = map8.remove(b) == true
@@ -603,55 +545,45 @@ static func test() -> void:
 	var tempArray6
 
 	if true:
-		var _g: Array[ClassWithoutHashCode] = ([] as Array[ClassWithoutHashCode])
+		var _g: Array = ([] as Array)
 		if true:
-			var map10: Variant = map9
-			var _g_keys: Variant = map10.keys()
-			while (_g_keys.get("hasNext").call()):
-				var _g_value
-				var _g_key
-				var key: ClassWithoutHashCode = _g_keys.get("next").call()
-				_g_value = map10.__get(key)
-				_g_key = key
-				var k: ClassWithoutHashCode = _g_key
-				var v: int = _g_value
-				_g.push_back(k)
+			var _g1: Variant = map9.keyValueIterator()
+			while (_g1.get("hasNext").call()):
+				var _g2: Variant = _g1.get("next").call()
+				var k: ClassWithoutHashCode = _g2.get("key")
+				var v: int = _g2.get("value")
+				_g.push(k)
 		tempArray6 = _g
 	if true:
-		var cond: bool = ([a2, b2, c2] as Array[ClassWithoutHashCode]).has(tempArray6[0])
+		var cond: bool = ([a2, b2, c2] as Array).contains(tempArray6[0])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([a2, b2, c2] as Array[ClassWithoutHashCode]).has(tempArray6[1])
+		var cond: bool = ([a2, b2, c2] as Array).contains(tempArray6[1])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([a2, b2, c2] as Array[ClassWithoutHashCode]).has(tempArray6[2])
+		var cond: bool = ([a2, b2, c2] as Array).contains(tempArray6[2])
 		assert(cond, "Test assert failed.")
 
 	var tempArray7
 
 	if true:
-		var _g: Array[int] = ([] as Array[int])
+		var _g: Array = ([] as Array)
 		if true:
-			var map10: Variant = map9
-			var _g_keys: Variant = map10.keys()
-			while (_g_keys.get("hasNext").call()):
-				var _g_value
-				var _g_key
-				var key: ClassWithoutHashCode = _g_keys.get("next").call()
-				_g_value = map10.__get(key)
-				_g_key = key
-				var k: ClassWithoutHashCode = _g_key
-				var v: int = _g_value
-				_g.push_back(v)
+			var _g1: Variant = map9.keyValueIterator()
+			while (_g1.get("hasNext").call()):
+				var _g2: Variant = _g1.get("next").call()
+				var k: ClassWithoutHashCode = _g2.get("key")
+				var v: int = _g2.get("value")
+				_g.push(v)
 		tempArray7 = _g
 	if true:
-		var cond: bool = ([1, 2, 3] as Array[int]).has(tempArray7[0])
+		var cond: bool = ([1, 2, 3] as Array).contains(tempArray7[0])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([1, 2, 3] as Array[int]).has(tempArray7[1])
+		var cond: bool = ([1, 2, 3] as Array).contains(tempArray7[1])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([1, 2, 3] as Array[int]).has(tempArray7[2])
+		var cond: bool = ([1, 2, 3] as Array).contains(tempArray7[2])
 		assert(cond, "Test assert failed.")
 
 	var copied4: haxe_ds_ObjectMap = map9.copy()
@@ -686,45 +618,37 @@ static func test() -> void:
 		var cond: bool = map9.__get(a2) == 1
 		assert(cond, "Test assert failed.")
 
-	var values8: Array[int] = ([] as Array[int])
+	var values8: Array = ([] as Array)
 
 	if true:
 		var val: Variant = map9.iterator()
 		while (val.get("hasNext").call()):
 			var val2: int = val.get("next").call()
-			values8.push_back(val2)
+			values8.push(val2)
 	if true:
-		var cond: bool = values8.size() == 3
+		var cond: bool = values8.length == 3
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([1, 2, 3] as Array[int]).has(values8[0])
+		var cond: bool = ([1, 2, 3] as Array).contains(values8[0])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([1, 2, 3] as Array[int]).has(values8[1])
+		var cond: bool = ([1, 2, 3] as Array).contains(values8[1])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([1, 2, 3] as Array[int]).has(values8[2])
+		var cond: bool = ([1, 2, 3] as Array).contains(values8[2])
 		assert(cond, "Test assert failed.")
 
-	var keys8: Array[ClassWithoutHashCode] = ([a2, b2, c2] as Array[ClassWithoutHashCode])
+	var keys8: Array = ([a2, b2, c2] as Array)
 
 	if true:
 		var key: Variant = map9.keys()
 		while (key.get("hasNext").call()):
 			var key2: ClassWithoutHashCode = key.get("next").call()
 			if true:
-				var tempBool3
-				if true:
-					var index: int = keys8.find(key2)
-					if (index >= 0):
-						keys8.remove_at(index)
-						tempBool3 = true
-					else:
-						tempBool3 = false
-				var cond: bool = tempBool3
+				var cond: bool = keys8.remove(key2)
 				assert(cond, "Test assert failed.")
 
-	assert(keys8 == ([] as Array[ClassWithoutHashCode]), "Test assert failed.")
+	assert(keys8 == ([] as Array), "Test assert failed.")
 
 	if true:
 		var cond: bool = map9.remove(b2) == true
@@ -858,11 +782,13 @@ static func test() -> void:
 		var cond: bool = (tempIterator3).get("next").call() == 3
 		assert(cond, "Test assert failed.")
 
+	var map11
+
 	assert("TType(Map,[TInst(String,[]),TAbstract(Int,[])])" == "TType(Map,[TInst(String,[]),TAbstract(Int,[])])", "Test assert failed.")
 	assert(true == true, "Test assert failed.")
 
 	if true:
-		var tempLeft1
+		var tempKeyValueIterator
 		if true:
 			var tempMap6
 			if true:
@@ -870,15 +796,11 @@ static func test() -> void:
 				_g.__set("", "")
 				tempMap6 = _g
 			var this1: Variant = tempMap6
-			var inlMapKeyValueIterator_keys: Variant = this1.keys()
-			var key: String = inlMapKeyValueIterator_keys.get("next").call()
-			var inlobj_value: String = this1.__get(key)
-			var inlobj_key: String = key
-			tempLeft1 = inlobj_key
-		var cond: bool = tempLeft1 == ""
+			tempKeyValueIterator = this1.keyValueIterator()
+		var cond: bool = (tempKeyValueIterator).get("next").call().get("key") == ""
 		assert(cond, "Test assert failed.")
 	if true:
-		var tempLeft2
+		var tempKeyValueIterator1
 		if true:
 			var tempMap7
 			if true:
@@ -886,15 +808,11 @@ static func test() -> void:
 				_g.__set("", "")
 				tempMap7 = _g
 			var this1: Variant = tempMap7
-			var inlMapKeyValueIterator_keys: Variant = this1.keys()
-			var key: String = inlMapKeyValueIterator_keys.get("next").call()
-			var inlobj_value: String = this1.__get(key)
-			var inlobj_key: String = key
-			tempLeft2 = inlobj_value
-		var cond: bool = tempLeft2 == ""
+			tempKeyValueIterator1 = this1.keyValueIterator()
+		var cond: bool = (tempKeyValueIterator1).get("next").call().get("value") == ""
 		assert(cond, "Test assert failed.")
 	if true:
-		var tempLeft3
+		var tempKeyValueIterator2
 		if true:
 			var tempMap8
 			if true:
@@ -902,15 +820,11 @@ static func test() -> void:
 				_g.__set(2, 3)
 				tempMap8 = _g
 			var this1: Variant = tempMap8
-			var inlMapKeyValueIterator_keys: Variant = this1.keys()
-			var key: int = inlMapKeyValueIterator_keys.get("next").call()
-			var inlobj_value: int = this1.__get(key)
-			var inlobj_key: int = key
-			tempLeft3 = inlobj_key
-		var cond: bool = tempLeft3 == 2
+			tempKeyValueIterator2 = this1.keyValueIterator()
+		var cond: bool = (tempKeyValueIterator2).get("next").call().get("key") == 2
 		assert(cond, "Test assert failed.")
 	if true:
-		var tempLeft4
+		var tempKeyValueIterator3
 		if true:
 			var tempMap9
 			if true:
@@ -918,12 +832,8 @@ static func test() -> void:
 				_g.__set(2, 3)
 				tempMap9 = _g
 			var this1: Variant = tempMap9
-			var inlMapKeyValueIterator_keys: Variant = this1.keys()
-			var key: int = inlMapKeyValueIterator_keys.get("next").call()
-			var inlobj_value: int = this1.__get(key)
-			var inlobj_key: int = key
-			tempLeft4 = inlobj_value
-		var cond: bool = tempLeft4 == 3
+			tempKeyValueIterator3 = this1.keyValueIterator()
+		var cond: bool = (tempKeyValueIterator3).get("next").call().get("value") == 3
 		assert(cond, "Test assert failed.")
 
 	var tempMap10
@@ -938,35 +848,35 @@ static func test() -> void:
 	var tempArray8
 
 	if true:
-		var _g: Array[String] = ([] as Array[String])
+		var _g: Array = ([] as Array)
 		if true:
 			var kv: Variant = iterable.get("keyValueIterator").call()
 			while (kv.get("hasNext").call()):
 				var kv2: Variant = kv.get("next").call()
-				_g.push_back(kv2.get("value"))
+				_g.push(kv2.get("value"))
 		tempArray8 = _g
 	if true:
-		var cond: bool = (["2", "4"] as Array[String]).has(tempArray8[0])
+		var cond: bool = (["2", "4"] as Array).contains(tempArray8[0])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = (["2", "4"] as Array[String]).has(tempArray8[1])
+		var cond: bool = (["2", "4"] as Array).contains(tempArray8[1])
 		assert(cond, "Test assert failed.")
 
 	var iterator: Variant = iterable.get("keyValueIterator").call()
 	var tempArray9
 
 	if true:
-		var _g: Array[int] = ([] as Array[int])
+		var _g: Array = ([] as Array)
 		if true:
 			while (iterator.get("hasNext").call()):
 				var kv2: Variant = iterator.get("next").call()
-				_g.push_back(kv2.get("key"))
+				_g.push(kv2.get("key"))
 		tempArray9 = _g
 	if true:
-		var cond: bool = ([1, 2] as Array[int]).has(tempArray9[0])
+		var cond: bool = ([1, 2] as Array).contains(tempArray9[0])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([1, 2] as Array[int]).has(tempArray9[1])
+		var cond: bool = ([1, 2] as Array).contains(tempArray9[1])
 		assert(cond, "Test assert failed.")
 
 	var tempMap11
@@ -983,17 +893,17 @@ static func test() -> void:
 	var tempArray10
 
 	if true:
-		var _g: Array[String] = ([] as Array[String])
+		var _g: Array = ([] as Array)
 		if true:
 			while (it2.get("hasNext").call()):
 				var v2: String = it2.get("next").call()
-				_g.push_back(v2)
+				_g.push(v2)
 		tempArray10 = _g
 	if true:
-		var cond: bool = (["2", "4"] as Array[String]).has(tempArray10[0])
+		var cond: bool = (["2", "4"] as Array).contains(tempArray10[0])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = (["2", "4"] as Array[String]).has(tempArray10[1])
+		var cond: bool = (["2", "4"] as Array).contains(tempArray10[1])
 		assert(cond, "Test assert failed.")
 
 	var it3 = dyn.keyValueIterator.call()
@@ -1001,17 +911,17 @@ static func test() -> void:
 	var tempArray11
 
 	if true:
-		var _g: Array[String] = ([] as Array[String])
+		var _g: Array = ([] as Array)
 		if true:
 			while (it4.get("hasNext").call()):
 				var kv2: Variant = it4.get("next").call()
-				_g.push_back(kv2.get("value"))
+				_g.push(kv2.get("value"))
 		tempArray11 = _g
 	if true:
-		var cond: bool = (["2", "4"] as Array[String]).has(tempArray11[0])
+		var cond: bool = (["2", "4"] as Array).contains(tempArray11[0])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = (["2", "4"] as Array[String]).has(tempArray11[1])
+		var cond: bool = (["2", "4"] as Array).contains(tempArray11[1])
 		assert(cond, "Test assert failed.")
 
 	var it5 = dyn.keyValueIterator.call()
@@ -1019,17 +929,17 @@ static func test() -> void:
 	var tempArray12
 
 	if true:
-		var _g: Array[int] = ([] as Array[int])
+		var _g: Array = ([] as Array)
 		if true:
 			while (it6.get("hasNext").call()):
 				var kv2: Variant = it6.get("next").call()
-				_g.push_back(kv2.get("key"))
+				_g.push(kv2.get("key"))
 		tempArray12 = _g
 	if true:
-		var cond: bool = ([1, 2] as Array[int]).has(tempArray12[0])
+		var cond: bool = ([1, 2] as Array).contains(tempArray12[0])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = ([1, 2] as Array[int]).has(tempArray12[1])
+		var cond: bool = ([1, 2] as Array).contains(tempArray12[1])
 		assert(cond, "Test assert failed.")
 
 	var tempMap12
@@ -1046,17 +956,17 @@ static func test() -> void:
 	var tempArray13
 
 	if true:
-		var _g: Array[String] = ([] as Array[String])
+		var _g: Array = ([] as Array)
 		if true:
 			while (it8.get("hasNext").call()):
 				var v2: String = it8.get("next").call()
-				_g.push_back(v2)
+				_g.push(v2)
 		tempArray13 = _g
 	if true:
-		var cond: bool = (["2", "4"] as Array[String]).has(tempArray13[0])
+		var cond: bool = (["2", "4"] as Array).contains(tempArray13[0])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = (["2", "4"] as Array[String]).has(tempArray13[1])
+		var cond: bool = (["2", "4"] as Array).contains(tempArray13[1])
 		assert(cond, "Test assert failed.")
 
 	var it9 = dyn2.keyValueIterator.call()
@@ -1064,17 +974,17 @@ static func test() -> void:
 	var tempArray14
 
 	if true:
-		var _g: Array[String] = ([] as Array[String])
+		var _g: Array = ([] as Array)
 		if true:
 			while (it10.get("hasNext").call()):
 				var kv2: Variant = it10.get("next").call()
-				_g.push_back(kv2.get("value"))
+				_g.push(kv2.get("value"))
 		tempArray14 = _g
 	if true:
-		var cond: bool = (["2", "4"] as Array[String]).has(tempArray14[0])
+		var cond: bool = (["2", "4"] as Array).contains(tempArray14[0])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = (["2", "4"] as Array[String]).has(tempArray14[1])
+		var cond: bool = (["2", "4"] as Array).contains(tempArray14[1])
 		assert(cond, "Test assert failed.")
 
 	var it11 = dyn2.keyValueIterator.call()
@@ -1082,16 +992,16 @@ static func test() -> void:
 	var tempArray15
 
 	if true:
-		var _g: Array[String] = ([] as Array[String])
+		var _g: Array = ([] as Array)
 		if true:
 			while (it12.get("hasNext").call()):
 				var kv2: Variant = it12.get("next").call()
-				_g.push_back(kv2.get("key"))
+				_g.push(kv2.get("key"))
 		tempArray15 = _g
 	if true:
-		var cond: bool = (["1a", "1b"] as Array[String]).has(tempArray15[0])
+		var cond: bool = (["1a", "1b"] as Array).contains(tempArray15[0])
 		assert(cond, "Test assert failed.")
 	if true:
-		var cond: bool = (["1a", "1b"] as Array[String]).has(tempArray15[1])
+		var cond: bool = (["1a", "1b"] as Array).contains(tempArray15[1])
 		assert(cond, "Test assert failed.")
 

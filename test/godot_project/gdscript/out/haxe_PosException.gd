@@ -17,5 +17,5 @@ func _init(message: String, previous = null, pos = null) -> void:
 		self.posInfos = pos
 
 func toString() -> String:
-	return "" + super.toString() + " in " + self.posInfos.get("className") + "." + self.posInfos.get("methodName") + " at " + self.posInfos.get("fileName") + ":" + str(self.posInfos.get("lineNumber"))
+	return "" + super.toString() + " in " + self.posInfos.get("className") + "." + self.posInfos.get("methodName") + " at " + self.posInfos.get("fileName") + ":" + self.posInfos.get("lineNumber")
 
