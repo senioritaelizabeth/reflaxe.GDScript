@@ -84,7 +84,8 @@ class Type {
 	}
 
 	public static function enumConstructor(e:EnumValue):String {
-		return untyped __gdscript__("{0}.get(\"_hx_name\")", e);
+		final name = untyped __gdscript__("{0}.get(\"_hx_name\")", e);
+		return if (name == null) "" else cast name;
 	}
 
 	public static function enumParameters(e:EnumValue):Array<Dynamic> {

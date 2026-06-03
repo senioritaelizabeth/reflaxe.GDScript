@@ -1,7 +1,8 @@
 # Test
-# test/gdscript/
+test/gdscript/out/
 test/project.godot
 *.gd
+*.uid
 project.godot
 # Reflaxe Build
 _Build/
