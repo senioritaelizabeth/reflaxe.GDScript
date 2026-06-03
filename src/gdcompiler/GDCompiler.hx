@@ -1,30 +1,23 @@
 package gdcompiler;
 
 #if (macro || gdscript_runtime)
-
-//import haxe.macro.Context;
+// import haxe.macro.Context;
 import reflaxe.helpers.Context;
 import haxe.macro.Expr;
 import haxe.macro.Type;
-
 import haxe.display.Display.MetadataTarget;
-
 import reflaxe.data.ClassVarData;
 import reflaxe.data.ClassFuncArg;
 import reflaxe.data.ClassFuncData;
 import reflaxe.data.EnumOptionData;
-
 import reflaxe.debug.MeasurePerformance;
-
 import reflaxe.DirectToStringCompiler;
 import reflaxe.preprocessors.implementations.RemoveSingleExpressionBlocksImpl;
 import reflaxe.preprocessors.implementations.RemoveTemporaryVariablesImpl;
 import reflaxe.preprocessors.implementations.everything_is_expr.EverythingIsExprSanitizer;
-
 import gdcompiler.config.Define;
 import gdcompiler.config.Meta;
 import gdcompiler.GDScriptStdTranslate;
-
 import gdcompiler.subcompilers.EnumCompiler;
 import gdcompiler.subcompilers.TypeCompiler;
 
@@ -63,48 +56,48 @@ class GDCompiler extends reflaxe.DirectToStringCompiler {
 	/**
 		Enum compiler.
 	**/
-	var enumCompiler: EnumCompiler;
+	var enumCompiler:EnumCompiler;
 
 	/**
 		Type compiler.
 	**/
-	var typeCompiler: TypeCompiler;
+	var typeCompiler:TypeCompiler;
 
 	/**
 		Keeps track of all the classes that extend from `godot.Node`.
 		Important for plugin generation.
 	**/
-	var pluginNodeClasses: Array<ClassType> = [];
+	var pluginNodeClasses:Array<ClassType> = [];
 
 	/**
 		Keeps track of all the classes that extend from `godot.Resource`.
 		Important for plugin generation.
 	**/
-	var pluginResourceClasses: Array<ClassType> = [];
+	var pluginResourceClasses:Array<ClassType> = [];
 
 	/**
 		A stack used to track any overrides to the "self" keyword.
 		If empty, "self" will be used.
 	**/
-	var selfStack: Array<{ selfName: String, publicOnly: Bool }> = [];
+	var selfStack:Array<{selfName:String, publicOnly:Bool}> = [];
 
 	/**
 		A list of fields (using Haxe names) that should not be generated
 		with `self.`. Certain circumstances in GDScript prevent this:
 		 - Cannot use `self.` on a field within its own setter.
 	**/
-	var bypassSelfStack: Array<String> = [];
+	var bypassSelfStack:Array<String> = [];
 
 	/**
 		Set to `true` when compiling an expression for a constructor.
 	**/
-	var compilingInConstructor: Bool = false;
+	var compilingInConstructor:Bool = false;
 
 	#if generate_resource_export_list
 	/**
 		A list of resources preloaded by the code.
 	**/
-	var usedResources: Array<String> = [];
+	var usedResources:Array<String> = [];
 	#end
 
 	public function new() {
@@ -118,10 +111,12 @@ class GDCompiler extends reflaxe.DirectToStringCompiler {
 	/**
 		Make sure "_" isn't a variable name.
 	**/
-	public override function compileVarName(name: String, expr: Null<TypedExpr> = null, field: Null<ClassField> = null): String {
-		switch(name) {
-			case "_": return "__underscore__";
-			case "__underscore__": throw "__underscore__ is a reserved variable name in Reflaxe/GDScript.";
+	public override function compileVarName(name:String, expr:Null<TypedExpr> = null, field:Null<ClassField> = null):String {
+		switch (name) {
+			case "_":
+				return "__underscore__";
+			case "__underscore__":
+				throw "__underscore__ is a reserved variable name in Reflaxe/GDScript.";
 		}
 		return super.compileVarName(name, expr, field);
 	}
@@ -134,9 +129,9 @@ class GDCompiler extends reflaxe.DirectToStringCompiler {
 		Contributes to an HxAutoLoad.gd extra file.
 		The file does not get generated if no contributions are made.
 	**/
-	public function addToAutoLoad(content: String) {
+	public function addToAutoLoad(content:String) {
 		final filename = autoLoadName + ".gd";
-		if(!hasAutoLoad()) {
+		if (!hasAutoLoad()) {
 			setExtraFile(filename, "extends Node\n\n");
 		}
 	}
@@ -146,11 +141,11 @@ class GDCompiler extends reflaxe.DirectToStringCompiler {
 		Generates the Godot plugin if `-D generate_godot_plugin` is defined.
 	**/
 	public override function onCompileEnd() {
-		if(Context.defined(Define.GenerateGodotPlugin)) {
+		if (Context.defined(Define.GenerateGodotPlugin)) {
 			generatePlugin();
 		}
 		#if generate_resource_export_list
-		if(Context.defined(Define.GenerateResourceExportList)) {
+		if (Context.defined(Define.GenerateResourceExportList)) {
 			setExtraFile("resource_export_list.txt", usedResources.join(", "));
 		}
 		#end
@@ -163,7 +158,7 @@ class GDCompiler extends reflaxe.DirectToStringCompiler {
 		Generates a basic haxe_Exception.gd file for exception support.
 	**/
 	function generateHaxeException() {
-		if(!extraFileExists("haxe_Exception.gd")) {
+		if (!extraFileExists("haxe_Exception.gd")) {
 			setExtraFile("haxe_Exception.gd", 'var _message: String
 var _previous: Variant
 var _native: Variant
@@ -194,13 +189,12 @@ func details() -> String:
 		}
 	}
 
-
 	/**
 		Get the name of the Godot plugin's main (or "script") file.
 	**/
-	function getPluginScriptName(): String {
+	function getPluginScriptName():String {
 		var result = Context.definedValue(Define.GodotPluginScriptName) ?? "plugin.gd";
-		if(!StringTools.contains(result, ".")) {
+		if (!StringTools.contains(result, ".")) {
 			result += ".gd";
 		}
 		return result;
@@ -209,7 +203,7 @@ func details() -> String:
 	/**
 		Generates the content in the `plugin.cfg` file.
 	**/
-	function generateGodotPluginConfig(pluginScriptName: String) {
+	function generateGodotPluginConfig(pluginScriptName:String) {
 		final getD = (name) -> Context.definedValue(name);
 		return '[plugin]
 name="${getD(Define.GodotPluginName) ?? "Reflaxe/GDScript Output"}"
@@ -223,16 +217,16 @@ script="$pluginScriptName"
 	/**
 		Generates the content for the plugin's main (or "script") file.
 	**/
-	function generatePluginScriptContent(): String {
+	function generatePluginScriptContent():String {
 		final enterTreeLines = [];
 		final exitTreeLines = [];
 
-		if(hasAutoLoad()) {
+		if (hasAutoLoad()) {
 			enterTreeLines.push('add_autoload_singleton(AUTOLOAD_NAME, "${autoLoadName + ".gd"}")');
 			exitTreeLines.push('remove_autoload_singleton(AUTOLOAD_NAME)');
 		}
 
-		for(cls in pluginNodeClasses) {
+		for (cls in pluginNodeClasses) {
 			// Guaranteed to have super class if in `pluginNodeClasses`.
 			final args = [
 				'"${cls.name}"',
@@ -244,7 +238,7 @@ script="$pluginScriptName"
 			exitTreeLines.push('remove_custom_type("${cls.name}")');
 		}
 
-		for(cls in pluginResourceClasses) {
+		for (cls in pluginResourceClasses) {
 			// Guaranteed to have super class if in `pluginResourceClasses`.
 			final args = [
 				'"${cls.name}"',
@@ -283,32 +277,33 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 
 	/**
 		Returns `true` if the `ClassType` is `godot.Node`.
-		
+
 		TODO: Might be obsolete, so maybe delete?
 	**/
-	function isGodotNode(t: ClassType) {
-		return if(t.isExtern && t.pack.length == 1 && t.pack[0] == "godot" && t.name == "Node") {
+	function isGodotNode(t:ClassType) {
+		return if (t.isExtern && t.pack.length == 1 && t.pack[0] == "godot" && t.name == "Node") {
 			true;
-		} else if(t.superClass != null) {
+		} else if (t.superClass != null) {
 			isGodotNode(t.superClass.t.get());
 		} else {
 			false;
 		}
 	}
 
-	function extendsFrom(t: ClassType, metadata: String): Bool {
-		if(t.superClass == null) {
+	function extendsFrom(t:ClassType, metadata:String):Bool {
+		if (t.superClass == null) {
 			return false;
 		}
 
 		final parent = t.superClass.t.get();
-		if(parent.meta.maybeHas(":generated_godot_api") && parent.meta.maybeHas(metadata)) {
+		if (parent.meta.maybeHas(":generated_godot_api") && parent.meta.maybeHas(metadata)) {
 			final entries = parent.meta.maybeExtract(metadata);
 
 			// Check if the first parameter of the metadata is `true`.
-			for(e in entries) {
-				switch(e.params) {
-					case [macro true]: return true;
+			for (e in entries) {
+				switch (e.params) {
+					case [macro true]:
+						return true;
 					case _:
 				}
 			}
@@ -317,22 +312,22 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 		return extendsFrom(parent, metadata);
 	}
 
-	function extendsFromNode(t: ClassType): Bool {
+	function extendsFromNode(t:ClassType):Bool {
 		return extendsFrom(t, ":is_node");
 	}
 
-	function extendsFromResource(t: ClassType): Bool {
+	function extendsFromResource(t:ClassType):Bool {
 		return extendsFrom(t, ":is_resource");
 	}
 
 	/**
 		Ignore interfaces.
 	**/
-	public override function shouldGenerateClass(cls: ClassType): Bool {
+	public override function shouldGenerateClass(cls:ClassType):Bool {
 		return !cls.isInterface && super.shouldGenerateClass(cls);
 	}
 
-	public function compileClassImpl(classType: ClassType, varFields: Array<ClassVarData>, funcFields: Array<ClassFuncData>): Null<String> {
+	public function compileClassImpl(classType:ClassType, varFields:Array<ClassVarData>, funcFields:Array<ClassFuncData>):Null<String> {
 		#if (eval && reflaxe_gdscript_measure)
 		final classMeasure = new reflaxe.debug.MeasurePerformance();
 		#end
@@ -345,12 +340,12 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 		final isWrapPublicOnly = classType.hasMeta(Meta.WrapPublicOnly);
 
 		var header = new StringBuf();
-	
+
 		// ----------------------
 		// @:icon
-		if(classType.meta.has(Meta.Icon)) {
+		if (classType.meta.has(Meta.Icon)) {
 			final iconPath = classType.meta.extractStringFromFirstMeta(Meta.Icon);
-			if(iconPath != null) {
+			if (iconPath != null) {
 				header.addMulti("@icon(\"", iconPath, "\")");
 			} else {
 				Context.error("Icon path required.", classType.meta.getFirstPosition(Meta.Icon) ?? classType.pos);
@@ -360,15 +355,15 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 		// ----------------------
 		// Class metadata string
 		final clsMeta = compileMetadata(classType.meta, MetadataTarget.Class);
-		if(clsMeta != null) {
+		if (clsMeta != null) {
 			header.add(StringTools.trim(clsMeta) + "\n");
 		}
 
 		// ----------------------
 		// Wrapper mode
-		if(isWrapper) { // Wrapper only exists to host code, should not be treated like node itself
+		if (isWrapper) { // Wrapper only exists to host code, should not be treated like node itself
 			header.add("extends Object\n");
-		} else if(classType.superClass != null) {
+		} else if (classType.superClass != null) {
 			header.add("extends " + typeCompiler.compileClassName(classType.superClass.t.get()) + "\n");
 		}
 
@@ -377,7 +372,7 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 		header.addMulti("class_name ", typeCompiler.compileClassName(classType));
 
 		// Add "_GD" to the end of class name for wrapper classes.
-		if(isWrapper) {
+		if (isWrapper) {
 			header.add("_GD");
 		}
 
@@ -385,7 +380,7 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 
 		// ----------------------
 		// VARIABLES
-		for(v in varFields) {
+		for (v in varFields) {
 			#if (eval && reflaxe_gdscript_measure)
 			final varMeasure = new reflaxe.debug.MeasurePerformance();
 			#end
@@ -393,13 +388,13 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 
 			// ----------------------
 			// Do not generate extern variables
-			if(field.isExtern || field.hasMeta(":extern") || field.hasMeta(":gd_extern")) {
+			if (field.isExtern || field.hasMeta(":extern") || field.hasMeta(":gd_extern")) {
 				continue;
 			}
 
 			// ----------------------
 			// Name of variable
-			final name: String = if(field.hasMeta(Meta.KeepName)) {
+			final name:String = if (field.hasMeta(Meta.KeepName)) {
 				field.name;
 			} else {
 				field.meta.extractStringFromFirstMeta(Meta.NativeName) ?? compileVarName(field.name, null, field);
@@ -412,58 +407,69 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 			// ----------------------
 			// @:onready
 			var isOnReady = false;
-			if(!v.isStatic && field.hasMeta(Meta.OnReady) && isGodotNode(classType)) {
+			if (!v.isStatic && field.hasMeta(Meta.OnReady) && isGodotNode(classType)) {
 				isOnReady = true;
 
-				switch(field.meta.extractExpressionsFromFirstMeta(Meta.OnReady)) {
-					case [macro val = $expr]: {
-						overrideExpression = expr.getConstString() + ";";
-					}
-					case [macro node = $expr]: {
-						overrideExpression = "$" + expr.getConstString() + ";";
-					}
-					case #if gdscript_snake_case [macro maybe_node = $expr] #else [macro maybeNode = $expr] #end: {
-						overrideExpression = "get_node_or_null(\"" + expr.getConstString() + "\");";
-					}
-					case []: {
-						// No arguments is allowed but doesn't do anything...
-					}
-					case _: {
-						final maybeNodeName = #if gdscript_snake_case "maybe_node" #else "maybeNode" #end;
-						Context.error("@:onready should have no arguments or one argument of format: `val = \"gdscript_expr\"`, `node = \"Node/Path\"`, or `" + maybeNodeName + " = \"Node/Path\"`.", field.pos);
-					}
+				switch (field.meta.extractExpressionsFromFirstMeta(Meta.OnReady)) {
+					case [macro val = $expr]:
+						{
+							overrideExpression = expr.getConstString() + ";";
+						}
+					case [macro node = $expr]:
+						{
+							overrideExpression = "$" + expr.getConstString() + ";";
+						}
+					case #if gdscript_snake_case [macro maybe_node = $expr] #else [macro maybeNode = $expr] #end:
+						{
+							overrideExpression = "get_node_or_null(\"" + expr.getConstString() + "\");";
+						}
+					case []:
+						{
+							// No arguments is allowed but doesn't do anything...
+						}
+					case _:
+						{
+							final maybeNodeName = #if gdscript_snake_case "maybe_node" #else "maybeNode" #end;
+							Context.error("@:onready should have no arguments or one argument of format: `val = \"gdscript_expr\"`, `node = \"Node/Path\"`, or `"
+								+ maybeNodeName
+								+ " = \"Node/Path\"`.",
+								field.pos);
+						}
 				}
 			}
 
 			// @:const
 			var isConst = false;
-			if(field.hasMeta(Meta.Const)) {
+			if (field.hasMeta(Meta.Const)) {
 				isConst = true;
 
-				switch(field.meta.extractExpressionsFromFirstMeta(Meta.Const)) {
-					case [macro preload = $expr]: {
-						final path = expr.getConstString();
-						#if generate_resource_export_list
-						usedResources.push(path);
-						#end
-						overrideExpression = "preload(\"" + path + "\");";
-					}
-					case []: {
-						// No arguments is allowed but doesn't do anything...
-					}
-					case _: {
-						Context.error("@:const should have no arguments or one argument of format: `preload = \"Resource/Path.tres\"`.", field.pos);
-					}
+				switch (field.meta.extractExpressionsFromFirstMeta(Meta.Const)) {
+					case [macro preload = $expr]:
+						{
+							final path = expr.getConstString();
+							#if generate_resource_export_list
+							usedResources.push(path);
+							#end
+							overrideExpression = "preload(\"" + path + "\");";
+						}
+					case []:
+						{
+							// No arguments is allowed but doesn't do anything...
+						}
+					case _:
+						{
+							Context.error("@:const should have no arguments or one argument of format: `preload = \"Resource/Path.tres\"`.", field.pos);
+						}
 				}
 			}
 
 			// ----------------------
 			// Expression assigned to variable
-			final gdScriptVal = if(overrideExpression != null) {
+			final gdScriptVal = if (overrideExpression != null) {
 				overrideExpression;
 			} else {
 				final e = field.expr() ?? v.findDefaultExpr();
-				if(e != null && !e.isStaticField("gdscript.Syntax", "NoAssign", true)) {
+				if (e != null && !e.isStaticField("gdscript.Syntax", "NoAssign", true)) {
 					// Do quick and dirty optimizations for "block-like" variable assignments.
 					// TODO: Incorporate as feature in Reflaxe.
 					final tvr = new RemoveTemporaryVariablesImpl(AllVariables, e, new Map());
@@ -478,15 +484,19 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 			// ----------------------
 			// Metadata string
 			final meta = compileMetadata(field.meta, MetadataTarget.ClassField) ?? "";
-			final meta = if(isOnReady) { "@onready " + meta; } else { meta; }
+			final meta = if (isOnReady) {
+				"@onready " + meta;
+			} else {
+				meta;
+			}
 
 			final declBuffer = new StringBuf();
 
 			declBuffer.add(meta);
-			if(isConst) {
+			if (isConst) {
 				declBuffer.add("const ");
 			} else {
-				if(v.isStatic) {
+				if (v.isStatic) {
 					declBuffer.add("static ");
 				}
 				declBuffer.add("var ");
@@ -495,26 +505,26 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 
 			#if !gdscript_untyped
 			final compiledType = typeCompiler.compileType(v.field.type, v.field.pos, v.field.hasMeta(":export"));
-			if(compiledType != null) {
+			if (compiledType != null) {
 				declBuffer.addMulti(": ", compiledType.trustMe());
 			}
 			#end
 
-			if(gdScriptVal.length > 0) {
+			if (gdScriptVal.length > 0) {
 				declBuffer.addMulti(" = ", gdScriptVal);
 			}
 
-			function getFunctionContent(originalFieldHaxeName: String, setOrGetFunctionName: Null<String>): Null<{ data: ClassFuncData, content: String }> {
-				if(setOrGetFunctionName != null) {
+			function getFunctionContent(originalFieldHaxeName:String, setOrGetFunctionName:Null<String>):Null<{data:ClassFuncData, content:String}> {
+				if (setOrGetFunctionName != null) {
 					var desiredFuncField = null;
-					for(f in funcFields) {
-						if(f.field.name == setOrGetFunctionName) {
+					for (f in funcFields) {
+						if (f.field.name == setOrGetFunctionName) {
 							desiredFuncField = f;
 							break;
 						}
 					}
 
-					if(desiredFuncField != null && desiredFuncField.expr != null) {
+					if (desiredFuncField != null && desiredFuncField.expr != null) {
 						bypassSelfStack.push(originalFieldHaxeName);
 						final result = {
 							data: desiredFuncField,
@@ -528,23 +538,24 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 			}
 
 			var getContent = null;
-			if(field.hasMeta(Meta.Get)) {
+			if (field.hasMeta(Meta.Get)) {
 				getContent = getFunctionContent(field.name, field.meta.extractIdentifierFromFirstMeta(Meta.Get, 0));
 			}
 			var setContent = null;
-			if(field.hasMeta(Meta.Set)) {
+			if (field.hasMeta(Meta.Set)) {
 				setContent = getFunctionContent(field.name, field.meta.extractIdentifierFromFirstMeta(Meta.Set, 0));
 			}
 
-			if(getContent != null || setContent != null) {
+			if (getContent != null || setContent != null) {
 				declBuffer.add(":\n");
-				if(getContent != null) {
+				if (getContent != null) {
 					declBuffer.add("\tget:\n");
 					declBuffer.add(getContent.content.tab(2));
-					if(setContent != null) declBuffer.add("\n");
+					if (setContent != null)
+						declBuffer.add("\n");
 					funcFields.remove(getContent.data);
 				}
-				if(setContent != null && setContent.data.args.length > 0) {
+				if (setContent != null && setContent.data.args.length > 0) {
 					declBuffer.addMulti("\tset(", setContent.data.args[0].getName(), "):\n");
 					declBuffer.add(setContent.content.tab(2));
 					funcFields.remove(setContent.data);
@@ -558,13 +569,13 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 			#end
 		}
 
-		if(isWrapper) {
+		if (isWrapper) {
 			variables.push("var wrapped_self");
 		}
 
 		// ----------------------
 		// FUNCTIONS
-		for(f in funcFields) {
+		for (f in funcFields) {
 			#if (eval && reflaxe_gdscript_measure)
 			final funcMeasure = new reflaxe.debug.MeasurePerformance();
 			#end
@@ -573,7 +584,7 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 
 			// ----------------------
 			// Do not generate extern functions
-			if(field.isExtern || field.hasMeta(":extern") || field.hasMeta(":gd_extern")) {
+			if (field.isExtern || field.hasMeta(":extern") || field.hasMeta(":gd_extern")) {
 				continue;
 			}
 
@@ -583,20 +594,20 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 
 			// ----------------------
 			// Name of function
-			final name: String = if(isConstructor) {
+			final name:String = if (isConstructor) {
 				"_init";
 			} else {
 				var result = null;
-				if(field.hasMeta(Meta.KeepName)) {
+				if (field.hasMeta(Meta.KeepName)) {
 					result = field.name;
-				} else if(field.hasMeta(Meta.NativeName)) {
+				} else if (field.hasMeta(Meta.NativeName)) {
 					result = field.meta.extractStringFromFirstMeta(Meta.NativeName);
 				}
-				if(result == null) {
+				if (result == null) {
 					final varName = compileVarName(field.name);
 
 					// Prepend "wrap_" to prevent conflicts with virtuals like "_ready" and "_process".
-					if(wrapField) {
+					if (wrapField) {
 						"wrap_" + varName;
 					} else {
 						varName;
@@ -610,7 +621,7 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 			// Metadata string
 			final meta = compileMetadata(field.meta, MetadataTarget.ClassField) ?? "";
 
-			if(f.kind == MethDynamic) {
+			if (f.kind == MethDynamic) {
 				// ----------------------
 				// Reassignable function
 				final e = field.expr();
@@ -618,7 +629,7 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 
 				final funcDeclaration = new StringBuf();
 				funcDeclaration.add(meta);
-				if(f.isStatic) {
+				if (f.isStatic) {
 					funcDeclaration.add("static ");
 				}
 				funcDeclaration.addMulti("var ", name, " = ", callable);
@@ -632,15 +643,15 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 
 				final funcDeclaration = new StringBuf();
 				funcDeclaration.add(meta);
-				if(f.isStatic) {
+				if (f.isStatic) {
 					funcDeclaration.add("static ");
 				}
 				funcDeclaration.add(isSignal ? "signal " : "func ");
 				funcDeclaration.add(name);
 				funcDeclaration.add("(");
-				if(wrapField) {
+				if (wrapField) {
 					funcDeclaration.add(wrapperSelfName);
-					if(args.length > 0) {
+					if (args.length > 0) {
 						funcDeclaration.add(",");
 					}
 				}
@@ -648,18 +659,18 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 				funcDeclaration.add(args.map(a -> compileFunctionArgument(a, field.pos)).join(", "));
 				funcDeclaration.add(")");
 
-				if(!isSignal) {
+				if (!isSignal) {
 					#if !gdscript_untyped
 					final returnType = typeCompiler.compileType(f.ret, field.pos);
-					if(returnType != null) {
+					if (returnType != null) {
 						funcDeclaration.addMulti(" -> ", returnType);
 					}
 					#end
 
 					funcDeclaration.add(":\n");
 
-					var gdScriptVal = if(f.expr != null) {
-						if(isWrapper) {
+					var gdScriptVal = if (f.expr != null) {
+						if (isWrapper) {
 							selfStack.push({
 								selfName: wrapperSelfName,
 								publicOnly: isWrapPublicOnly
@@ -668,11 +679,11 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 
 						var expr = f.expr;
 
-						if(isConstructor) {
+						if (isConstructor) {
 							compilingInConstructor = true;
 
 							final preconstructorFieldAssignmentData = classType.extractPreconstructorFieldAssignments(expr);
-							if(preconstructorFieldAssignmentData != null) {
+							if (preconstructorFieldAssignmentData != null) {
 								expr = preconstructorFieldAssignmentData.modifiedConstructor;
 							}
 						}
@@ -688,21 +699,21 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 						me.measure("expr is %MILLI%");
 						#end
 
-						if(isConstructor) {
+						if (isConstructor) {
 							compilingInConstructor = false;
 						}
 
-						if(isWrapper) {
+						if (isWrapper) {
 							selfStack.pop();
 						}
 
 						// Setup `wrapped_self`
-						if(isWrapper && isConstructor) {
+						if (isWrapper && isConstructor) {
 							result = "\tself.wrapped_self = _self\n" + result;
 						}
 
 						// Use "pass" if function empty
-						if(StringTools.trim(result).length == 0) {
+						if (StringTools.trim(result).length == 0) {
 							getEmptyFunctionContent(f);
 						} else {
 							result;
@@ -712,9 +723,8 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 					}
 
 					funcDeclaration.add(gdScriptVal);
-
 				}
-				
+
 				functions.push(funcDeclaration.toString());
 			}
 
@@ -725,7 +735,7 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 
 		// if there are no instance variables or functions,
 		// we don't need to generate a class
-		if(staticVariables.length <= 0 && variables.length <= 0 && functions.length <= 0) {
+		if (staticVariables.length <= 0 && variables.length <= 0 && functions.length <= 0) {
 			return null;
 		}
 
@@ -733,16 +743,16 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 		// Possible bug with GDScript 2.0 beta at the moment, but static
 		// functions don't work unless there's a constructor defined.
 		// So a blank GDScript constructor is created if one does not exist.
-		if(classType.constructor == null) {
+		if (classType.constructor == null) {
 			functions.insert(0, "func _init() -> void:\n\tpass");
 		}
 
 		// Check if extends from Node or Resource
-		if(!classType.hasMeta(Meta.DontAddToPlugin)) {
-			if(extendsFromNode(classType)) {
+		if (!classType.hasMeta(Meta.DontAddToPlugin)) {
+			if (extendsFromNode(classType)) {
 				pluginNodeClasses.push(classType);
 			}
-			if(extendsFromResource(classType)) {
+			if (extendsFromResource(classType)) {
 				pluginResourceClasses.push(classType);
 			}
 		}
@@ -753,15 +763,15 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 
 			result.add(header);
 
-			if(staticVariables.length > 0) {
+			if (staticVariables.length > 0) {
 				result.add(staticVariables.join("\n") + "\n\n");
 			}
 
-			if(variables.length > 0) {
+			if (variables.length > 0) {
 				result.add(variables.join("\n") + "\n\n");
 			}
 
-			if(functions.length > 0) {
+			if (functions.length > 0) {
 				result.add(functions.join("\n\n") + "\n\n");
 			}
 
@@ -780,26 +790,26 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 		return null;
 	}
 
-	function getEmptyFunctionContent(data: ClassFuncData): String {
-		if(data.ret.isVoid()) {
+	function getEmptyFunctionContent(data:ClassFuncData):String {
+		if (data.ret.isVoid()) {
 			return "\tpass";
 		}
 
-		if(data.ret.isBool()) {
+		if (data.ret.isBool()) {
 			return "\treturn false";
 		}
 
-		if(data.ret.isNumberType()) {
+		if (data.ret.isNumberType()) {
 			return "\treturn 0;";
 		}
 
 		return "\treturn null";
 	}
 
-	function getGDOutputPath(baseType: BaseType) {
+	function getGDOutputPath(baseType:BaseType) {
 		var path = baseType.globalName() + ".gd";
 		#if gdscript_output_dirs
-		if(baseType.pack.length > 0) {
+		if (baseType.pack.length > 0) {
 			#if !gdscript_always_packages_in_output_filenames
 			path = baseType.name + ".gd";
 			#end
@@ -809,20 +819,20 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 		return path;
 	}
 
-	function compileFunctionArgument(arg: ClassFuncArg, pos: Position) {
+	function compileFunctionArgument(arg:ClassFuncArg, pos:Position) {
 		final result = new StringBuf();
 		result.add(compileVarName(arg.getName()));
-		
+
 		#if !gdscript_untyped
 		final type = typeCompiler.compileType(arg.type, pos);
-		if(type != null) {
+		if (type != null) {
 			result.addMulti(": ", type);
 		}
 		#end
 
-		if(arg.expr != null) {
+		if (arg.expr != null) {
 			final valueCode = compileExpression(arg.expr);
-			if(valueCode != null) {
+			if (valueCode != null) {
 				result.addMulti(" = ", valueCode);
 			}
 		}
@@ -830,22 +840,22 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 		return result.toString();
 	}
 
-	function getNativeMetaString(metaAccess: Null<MetaAccess>) {
+	function getNativeMetaString(metaAccess:Null<MetaAccess>) {
 		var result = "";
 		final nativeMeta = metaAccess.extractNativeMeta();
-		if(nativeMeta != null) {
-			for(m in nativeMeta) {
+		if (nativeMeta != null) {
+			for (m in nativeMeta) {
 				result += "@" + m + "\n";
 			}
 		}
 		return result;
 	}
 
-	function getPathForBaseType(baseType: BaseType): String {
+	function getPathForBaseType(baseType:BaseType):String {
 		// @:outputFile(path: String)
-		var path = if(baseType.hasMeta(Meta.OutputFile)) {
+		var path = if (baseType.hasMeta(Meta.OutputFile)) {
 			final outputFilePath = baseType.meta.extractStringFromFirstMeta(Meta.OutputFile);
-			if(outputFilePath == null) {
+			if (outputFilePath == null) {
 				final msg = "@:outputFile requires a String path for the first argument.";
 				Context.error(msg, baseType.meta.getFirstPosition(Meta.OutputFile) ?? baseType.pos);
 			}
@@ -855,354 +865,393 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 		}
 
 		// Default name
-		if(path == null) {
+		if (path == null) {
 			path = getGDOutputPath(baseType);
 		}
 
 		return path;
 	}
 
-	public function compileEnumImpl(enumType: EnumType, options: Array<EnumOptionData>): Null<String> {
+	public function compileEnumImpl(enumType:EnumType, options:Array<EnumOptionData>):Null<String> {
 		enumCompiler.compile(enumType, options, getPathForBaseType(enumType));
 		return null;
 	}
-  
-	public function compileExpressionImpl(expr: TypedExpr, isTopLevel: Bool): Null<String> {
+
+	public function compileExpressionImpl(expr:TypedExpr, isTopLevel:Bool):Null<String> {
 		var result = new StringBuf();
-		switch(expr.expr) {
-			case TConst(constant): {
-				result.add(constantToGDScript(constant));
-			}
-			case TLocal(v): {
-				result.add(compileVarName(v.name, expr));
-				if(v.meta.maybeHas(":arrayWrap")) {
-					result.add("[0]");	
+		switch (expr.expr) {
+			case TConst(constant):
+				{
+					result.add(constantToGDScript(constant));
 				}
-			}
-			case TIdent(s): {
-				result.add(compileVarName(s, expr));
-			}
-			case TArray(e1, e2): {
-				result.addMulti(compileExpressionOrError(e1), "[", compileExpressionOrError(e2), "]");
-			}
-			case TBinop(OpAssign, { expr: TField(e1, FAnon(classFieldRef)) }, e2): {
-				var gdExpr1 = compileExpressionOrError(e1);
-				var gdExpr2 = compileExpressionOrError(e2);
-				result.add(gdExpr1 + ".set(\"" + classFieldRef.get().name + "\", " + gdExpr2 + ")");
-			}
-			case TBinop(op, e1, e2): {
-				result.add(binopToGDScript(op, e1, e2));
-			}
-			case TField(e, fa): {
-				result.add(fieldAccessToGDScript(e, fa));
-			}
-			case TTypeExpr(m): {
-				result.add(typeCompiler.compileType(TypeHelper.fromModuleType(m), expr.pos) ?? "Variant");
-			}
-			case TParenthesis(e): {
-				final gdScript = compileExpressionOrError(e);
-				final expr = if(!EverythingIsExprSanitizer.isBlocklikeExpr(e)) {
-					"(" + gdScript + ")";
-				} else {
-					gdScript;
-				}
-				result.add(expr);
-			}
-			case TObjectDecl(fields): {
-				result.add("{\n");
-				for(i in 0...fields.length) {
-					final field = fields[i];
-					result.addMulti("\t\"", field.name, "\": ");
-					result.add(compileExpression(field.expr));
-					if(i < fields.length - 1) {
-						result.add(",");
+			case TLocal(v):
+				{
+					result.add(compileVarName(v.name, expr));
+					if (v.meta.maybeHas(":arrayWrap")) {
+						result.add("[0]");
 					}
-					result.add("\n"); 
 				}
-				result.add("}");
-			}
-			case TArrayDecl(el): {
-				if(isTopLevel) {
-					result.add("[");
-					result.add(el.map(e -> compileExpression(e)).join(", "));
-					result.add("]");
-				} else {
-					result.add("([");
-					result.add(el.map(e -> compileExpression(e)).join(", "));
-					result.add("] as ");
-					result.add(typeCompiler.compileType(expr.t, expr.pos));
-					result.add(")");
+			case TIdent(s):
+				{
+					result.add(compileVarName(s, expr));
 				}
-			}
-			case TCall(e, el): {
-				final isEmptyConstructorSuperCall =  switch(e.unwrapParenthesis().expr) {
-					case TConst(TSuper) if(compilingInConstructor && el.length == 0): true;
-					case _: false;
+			case TArray(e1, e2):
+				{
+					result.addMulti(compileExpressionOrError(e1), "[", compileExpressionOrError(e2), "]");
 				}
-
-				if(!isEmptyConstructorSuperCall) {
-					result.add(callToGDScript(e, el, expr));
+			case TBinop(OpAssign, {expr: TField(e1, FAnon(classFieldRef))}, e2):
+				{
+					var gdExpr1 = compileExpressionOrError(e1);
+					var gdExpr2 = compileExpressionOrError(e2);
+					result.add(gdExpr1 + ".set(\"" + classFieldRef.get().name + "\", " + gdExpr2 + ")");
 				}
-			}
-			case TNew(classTypeRef, _, el): {
-				result.add(newToGDScript(classTypeRef, expr, el));
-			}
-			case TUnop(op, postFix, e): {
-				result.add(unopToGDScript(op, e, postFix));
-			}
-			case TFunction(tfunc): {
-				result.add("func(");
-				var doComma = false;
-				for(i in 0...tfunc.args.length) {
-					if(doComma) result.add(", ");
-					else doComma = true;
-
-					final arg = tfunc.args[i];
-					final reflaxeArg = new ClassFuncArg(i, arg.v.t, false, arg.v.name, arg.v.meta, arg.value, arg.v);
-					result.add(compileFunctionArgument(reflaxeArg, expr.pos));
+			case TBinop(op, e1, e2):
+				{
+					result.add(binopToGDScript(op, e1, e2));
 				}
-				result.add(")");
-
-				#if !gdscript_untyped
-				final type = typeCompiler.compileType(tfunc.t, expr.pos);
-				if(type != null) {
-					result.addMulti(" -> ", type);
+			case TField(e, fa):
+				{
+					result.add(fieldAccessToGDScript(e, fa));
 				}
-				#end
-
-				result.add(":\n");
-				result.add(toIndentedScope(tfunc.expr));
-			}
-			case TVar(tvar, maybeExpr): {
-				result.add("var ");
-				result.add(compileVarName(tvar.name, expr));
-				if(maybeExpr != null && !maybeExpr.isStaticField("gdscript.Syntax", "NoAssign", true)) {
-					final e = compileExpressionOrError(maybeExpr);
-					if(tvar.meta.maybeHas(":arrayWrap")) {
-						result.addMulti(" = [", e, "]");	
+			case TTypeExpr(m):
+				{
+					result.add(typeCompiler.compileType(TypeHelper.fromModuleType(m), expr.pos) ?? "Variant");
+				}
+			case TParenthesis(e):
+				{
+					final gdScript = compileExpressionOrError(e);
+					final expr = if (!EverythingIsExprSanitizer.isBlocklikeExpr(e)) {
+						"(" + gdScript + ")";
 					} else {
-						#if !gdscript_untyped
-						final compiledType = typeCompiler.compileType(tvar.t, expr.pos);
-						if(compiledType != null) {
-							result.addMulti(": ", compiledType);
+						gdScript;
+					}
+					result.add(expr);
+				}
+			case TObjectDecl(fields):
+				{
+					result.add("{\n");
+					for (i in 0...fields.length) {
+						final field = fields[i];
+						result.addMulti("\t\"", field.name, "\": ");
+						result.add(compileExpression(field.expr));
+						if (i < fields.length - 1) {
+							result.add(",");
 						}
-						#end
-
-						result.addMulti(" = ", e);
+						result.add("\n");
+					}
+					result.add("}");
+				}
+			case TArrayDecl(el):
+				{
+					if (isTopLevel) {
+						result.add("[");
+						result.add(el.map(e -> compileExpression(e)).join(", "));
+						result.add("]");
+					} else {
+						result.add("([");
+						result.add(el.map(e -> compileExpression(e)).join(", "));
+						result.add("] as ");
+						result.add(typeCompiler.compileType(expr.t, expr.pos));
+						result.add(")");
 					}
 				}
-			}
-			case TBlock(el): {
-				result.add("if true:\n");
-
-				if(el.length > 0) {
-					result.add(
-						el
-						.map(e -> compileExpression(e))
-						.filter(e -> e != null)
-						.map(e -> e.trustMe().tab())
-						.join("\n")
-					);
-				} else {
-					result.add("\tpass");
-				}
-			}
-			case TFor(tvar, iterExpr, blockExpr): {
-				result.addMulti(
-					"for ", tvar.name, " in ", compileExpressionOrError(iterExpr), ":\n"
-				);
-				result.add(toIndentedScope(blockExpr));
-			}
-			case TIf(econd, ifExpr, elseExpr): {
-				result.addMulti("if ", compileExpressionOrError(econd), ":\n");
-				result.add(toIndentedScope(ifExpr));
-				if(elseExpr != null) {
-					result.add("\n");
-					result.add("else:\n");
-					result.add(toIndentedScope(elseExpr));
-				}
-			}
-			case TWhile(econd, blockExpr, normalWhile): {
-				if(normalWhile) {
-					final gdCond = compileExpressionOrError(econd);
-					result.addMulti("while ", gdCond, ":\n");
-					result.add(toIndentedScope(blockExpr));
-				} else {
-					final gdCond = compileExpressionOrError({
-						expr: TUnop(Unop.OpNot, false, econd),
-						pos: econd.pos,
-						t: econd.t,
-					});
-					result.add("while true:\n");
-					result.add(toIndentedScope(blockExpr));
-					result.addMulti("\n\tif ", gdCond, ":\n");
-					result.add("\t\tbreak");
-				}
-			}
-			case TSwitch(e, cases, edef): {
-				// Check if this is a switch on an extern enum...
-				final externEnumType = switch(e.unwrapParenthesis().expr) {
-					case TEnumIndex(e1): {
-						switch(e1.t) {
-							case TEnum(_.get() => e, _) if(e.isReflaxeExtern()): e;
-							case _: null;
-						}
+			case TCall(e, el):
+				{
+					final isEmptyConstructorSuperCall = switch (e.unwrapParenthesis().expr) {
+						case TConst(TSuper) if (compilingInConstructor && el.length == 0): true;
+						case _: false;
 					}
-					case _: null;
+
+					if (!isEmptyConstructorSuperCall) {
+						result.add(callToGDScript(e, el, expr));
+					}
 				}
+			case TNew(classTypeRef, _, el):
+				{
+					result.add(newToGDScript(classTypeRef, expr, el));
+				}
+			case TUnop(op, postFix, e):
+				{
+					result.add(unopToGDScript(op, e, postFix));
+				}
+			case TFunction(tfunc):
+				{
+					result.add("func(");
+					var doComma = false;
+					for (i in 0...tfunc.args.length) {
+						if (doComma)
+							result.add(", ");
+						else
+							doComma = true;
 
-				result.addMulti("match ", compileExpressionOrError(e), ":");
-				for(c in cases) {
-					result.add("\n\t");
-					result.add(c.values.map(function(v: TypedExpr) {
-						// If the switch expression is an extern enum,
-						// convert the "Haxe" enum indexes to the name.
-						//
-						// This is because the Haxe indexes do not match the
-						// number values for the Godot extern enums.
-						if(externEnumType != null) {
-							switch(v.expr) {
-								case TConst(TInt(index)): {
-									return externEnumType.names[index];
-								}
-								case _:
-							}
-						}
+						final arg = tfunc.args[i];
+						final reflaxeArg = new ClassFuncArg(i, arg.v.t, false, arg.v.name, arg.v.meta, arg.value, arg.v);
+						result.add(compileFunctionArgument(reflaxeArg, expr.pos));
+					}
+					result.add(")");
 
-						return compileExpressionOrError(v);
-					}).join(", "));
+					#if !gdscript_untyped
+					final type = typeCompiler.compileType(tfunc.t, expr.pos);
+					if (type != null) {
+						result.addMulti(" -> ", type);
+					}
+					#end
+
 					result.add(":\n");
-					result.add(toIndentedScope(c.expr).toString().tab());
+					result.add(toIndentedScope(tfunc.expr));
 				}
-				if(edef != null) {
-					result.add("\n\t_:\n");
-					result.add(toIndentedScope(edef).toString().tab());
-				}
-			}
-			case TTry(e, catches): {
-				result.add(compileExpressionOrError(e));
-				final msg = "GDScript does not support try-catch. The expressions contained in the try block will be compiled, and the catches will be ignored.";
-				Context.warning(msg, expr.pos);
-			}
-			case TReturn(maybeExpr): {
-				result.add("return");
-				if(maybeExpr != null) {
-					result.add(" ");
-					result.add(compileExpression(maybeExpr));
-				}
-			}
-			case TBreak: {
-				result.add("break");
-			}
-			case TContinue: {
-				result.add("continue");
-			}
-			case TThrow(expr): {
-				result.addMulti("assert(false, str(", compileExpressionOrError(expr), "))");
-			}
-			case TCast(expr, maybeModuleType): {
-				final hasModuleType = maybeModuleType != null;
-				if(hasModuleType) {
-					result.add("(");
-				}
-				result.add(compileExpressionOrError(expr));
-				if(hasModuleType) {
-					final typeCode = typeCompiler.compileType(TypeHelper.fromModuleType(maybeModuleType.trustMe()), expr.pos);
-					result.addMulti(" as ", typeCode ?? "Variant", ")");
-				}
-			}
-			case TMeta({ name: _ => Meta.Await }, expr): {
-				result.addMulti("await ", compileExpressionOrError(expr));
-			}
-			case TMeta(_, expr): {
-				result.add(compileExpressionOrError(expr));
-			}
-			case TEnumParameter(expr, enumField, index): {
-				result.add(compileExpressionOrError(expr));
-				switch(enumField.type) {
-					case TFun(args, _): {
-						if(index < args.length) {
-							result.addMulti(".", args[index].name);
-						}
-					}
-					case _:
-				}
-			}
-			case TEnumIndex(expr): {
-				final kind = switch(expr.t) {
-					case TEnum(_.get() => e, _): {
-						if(e.isReflaxeExtern()) {
-							GDScriptEnum;
+			case TVar(tvar, maybeExpr):
+				{
+					result.add("var ");
+					result.add(compileVarName(tvar.name, expr));
+					if (maybeExpr != null && !maybeExpr.isStaticField("gdscript.Syntax", "NoAssign", true)) {
+						final e = compileExpressionOrError(maybeExpr);
+						if (tvar.meta.maybeHas(":arrayWrap")) {
+							result.addMulti(" = [", e, "]");
 						} else {
-							enumCompiler.getCompileKind(e);
+							#if !gdscript_untyped
+							final compiledType = typeCompiler.compileType(tvar.t, expr.pos);
+							if (compiledType != null) {
+								result.addMulti(": ", compiledType);
+							}
+							#end
+
+							result.addMulti(" = ", e);
 						}
 					}
-					case _: AsDictionary;
 				}
+			case TBlock(el):
+				{
+					result.add("if true:\n");
 
-				final expression = compileExpressionOrError(expr);
-				switch(kind) {
-					case GDScriptEnum: {
-						result.addMulti("((", expression, " as Variant) as int)");
-					}
-					case AsInt: {
-						result.add(expression);
-					}
-					case AsDictionary: {
-						result.addMulti(expression, "._index");
+					if (el.length > 0) {
+						result.add(el.map(e -> compileExpression(e))
+							.filter(e -> e != null)
+							.map(e -> e.trustMe().tab())
+							.join("\n"));
+					} else {
+						result.add("\tpass");
 					}
 				}
-			}
+			case TFor(tvar, iterExpr, blockExpr):
+				{
+					result.addMulti("for ", tvar.name, " in ", compileExpressionOrError(iterExpr), ":\n");
+					result.add(toIndentedScope(blockExpr));
+				}
+			case TIf(econd, ifExpr, elseExpr):
+				{
+					result.addMulti("if ", compileExpressionOrError(econd), ":\n");
+					result.add(toIndentedScope(ifExpr));
+					if (elseExpr != null) {
+						result.add("\n");
+						result.add("else:\n");
+						result.add(toIndentedScope(elseExpr));
+					}
+				}
+			case TWhile(econd, blockExpr, normalWhile):
+				{
+					if (normalWhile) {
+						final gdCond = compileExpressionOrError(econd);
+						result.addMulti("while ", gdCond, ":\n");
+						result.add(toIndentedScope(blockExpr));
+					} else {
+						final gdCond = compileExpressionOrError({
+							expr: TUnop(Unop.OpNot, false, econd),
+							pos: econd.pos,
+							t: econd.t,
+						});
+						result.add("while true:\n");
+						result.add(toIndentedScope(blockExpr));
+						result.addMulti("\n\tif ", gdCond, ":\n");
+						result.add("\t\tbreak");
+					}
+				}
+			case TSwitch(e, cases, edef):
+				{
+					// Check if this is a switch on an extern enum...
+					final externEnumType = switch (e.unwrapParenthesis().expr) {
+						case TEnumIndex(e1): {
+								switch (e1.t) {
+									case TEnum(_.get() => e, _) if (e.isReflaxeExtern()): e;
+									case _: null;
+								}
+							}
+						case _: null;
+					}
+
+					result.addMulti("match ", compileExpressionOrError(e), ":");
+					for (c in cases) {
+						result.add("\n\t");
+						result.add(c.values.map(function(v:TypedExpr) {
+							// If the switch expression is an extern enum,
+							// convert the "Haxe" enum indexes to the name.
+							//
+							// This is because the Haxe indexes do not match the
+							// number values for the Godot extern enums.
+							if (externEnumType != null) {
+								switch (v.expr) {
+									case TConst(TInt(index)):
+										{
+											return externEnumType.names[index];
+										}
+									case _:
+								}
+							}
+
+							return compileExpressionOrError(v);
+						}).join(", "));
+						result.add(":\n");
+						result.add(toIndentedScope(c.expr).toString().tab());
+					}
+					if (edef != null) {
+						result.add("\n\t_:\n");
+						result.add(toIndentedScope(edef).toString().tab());
+					}
+				}
+			case TTry(e, catches):
+				{
+					result.add(compileExpressionOrError(e));
+					final msg = "GDScript does not support try-catch. The expressions contained in the try block will be compiled, and the catches will be ignored.";
+					Context.warning(msg, expr.pos);
+				}
+			case TReturn(maybeExpr):
+				{
+					result.add("return");
+					if (maybeExpr != null) {
+						result.add(" ");
+						result.add(compileExpression(maybeExpr));
+					}
+				}
+			case TBreak:
+				{
+					result.add("break");
+				}
+			case TContinue:
+				{
+					result.add("continue");
+				}
+			case TThrow(expr):
+				{
+					result.addMulti("assert(false, str(", compileExpressionOrError(expr), "))");
+				}
+			case TCast(expr, maybeModuleType):
+				{
+					final hasModuleType = maybeModuleType != null;
+					if (hasModuleType) {
+						result.add("(");
+					}
+					result.add(compileExpressionOrError(expr));
+					if (hasModuleType) {
+						final typeCode = typeCompiler.compileType(TypeHelper.fromModuleType(maybeModuleType.trustMe()), expr.pos);
+						result.addMulti(" as ", typeCode ?? "Variant", ")");
+					}
+				}
+			case TMeta({name: _ => Meta.Await}, expr):
+				{
+					result.addMulti("await ", compileExpressionOrError(expr));
+				}
+			case TMeta(_, expr):
+				{
+					result.add(compileExpressionOrError(expr));
+				}
+			case TEnumParameter(expr, enumField, index):
+				{
+					result.add(compileExpressionOrError(expr));
+					switch (enumField.type) {
+						case TFun(args, _): {
+								if (index < args.length) {
+									result.addMulti(".", args[index].name);
+								}
+							}
+						case _:
+					}
+				}
+			case TEnumIndex(expr):
+				{
+					final kind = switch (expr.t) {
+						case TEnum(_.get() => e, _): {
+								if (e.isReflaxeExtern()) {
+									GDScriptEnum;
+								} else {
+									enumCompiler.getCompileKind(e);
+								}
+							}
+						case _: AsDictionary;
+					}
+
+					final expression = compileExpressionOrError(expr);
+					switch (kind) {
+						case GDScriptEnum: {
+								result.addMulti("((", expression, " as Variant) as int)");
+							}
+						case AsInt: {
+								result.add(expression);
+							}
+						case AsDictionary: {
+								result.addMulti(expression, "._index");
+							}
+					}
+				}
 		}
 		return result.toString();
 	}
 
-	function toIndentedScope(e: TypedExpr): StringBuf {
+	function toIndentedScope(e:TypedExpr):StringBuf {
 		final result = new StringBuf();
-		switch(e.expr) {
-			case TBlock(el): {
-				if(el.length > 0) {
-					for(i in 0...el.length) {
-						final code = compileExpression(el[i]);
-						if(code != null) {
-							result.add(code.tab());
-							if(i < el.length - 1) {
-								result.add("\n");
+		switch (e.expr) {
+			case TBlock(el):
+				{
+					if (el.length > 0) {
+						for (i in 0...el.length) {
+							final code = compileExpression(el[i]);
+							if (code != null) {
+								result.add(code.tab());
+								if (i < el.length - 1) {
+									result.add("\n");
+								}
 							}
 						}
+					} else {
+						result.add("\tpass");
 					}
-				} else {
-					result.add("\tpass");
 				}
-			}
-			case _: {
-				final gdscript = compileExpression(e) ?? "pass";
-				result.add(gdscript.tab());
-			}
+			case _:
+				{
+					final gdscript = compileExpression(e) ?? "pass";
+					result.add(gdscript.tab());
+				}
 		}
 		return result;
 	}
 
-	function constantToGDScript(constant: TConstant): String {
-		switch(constant) {
-			case TInt(i): return Std.string(i);
-			case TFloat(s): return s.indexOf(".") == -1 ? '$s.0' : s;
-			case TString(s): return stringToGDScript(s);
-			case TBool(b): return b ? "true" : "false";
-			case TNull: return "null";
-			case TThis: {
-				if(selfStack.length > 0) {
-					return selfStack[selfStack.length - 1].selfName;
+	function constantToGDScript(constant:TConstant):String {
+		switch (constant) {
+			case TInt(i):
+				return Std.string(i);
+			case TFloat(s):
+				return s.indexOf(".") == -1 ? '$s.0' : s;
+			case TString(s):
+				return stringToGDScript(s);
+			case TBool(b):
+				return b ? "true" : "false";
+			case TNull:
+				return "null";
+			case TThis:
+				{
+					if (selfStack.length > 0) {
+						return selfStack[selfStack.length - 1].selfName;
+					}
+					return "self";
 				}
-				return "self";
-			}
-			case TSuper: return "super";
-			case _: {}
+			case TSuper:
+				return "super";
+			case _:
+				{}
 		}
 		return "";
 	}
 
-	function stringToGDScript(s: String): String {
+	function stringToGDScript(s:String):String {
 		var result = StringTools.replace(s, "\\", "\\\\");
 		result = StringTools.replace(result, "\"", "\\\"");
 		result = StringTools.replace(result, "\t", "\\t");
@@ -1211,48 +1260,53 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 		return "\"" + result + "\"";
 	}
 
-	function binopToGDScript(op: Binop, e1: TypedExpr, e2: TypedExpr): String {
+	function binopToGDScript(op:Binop, e1:TypedExpr, e2:TypedExpr):String {
 		var gdExpr1 = compileExpression(e1);
 		var gdExpr2 = compileExpression(e2);
 
-		switch(op) {
-			case OpUShr: {
-				return '(($gdExpr1 & -1) >> $gdExpr2) & -1';
-			}
-			case OpAssignOp(OpUShr): {
-				return '$gdExpr1 = ((($gdExpr1 & -1) >> $gdExpr2) & -1)';
-			}
+		switch (op) {
+			case OpUShr:
+				{
+					return '(($gdExpr1 & -1) >> $gdExpr2) & -1';
+				}
+			case OpAssignOp(OpUShr):
+				{
+					return '$gdExpr1 = ((($gdExpr1 & -1) >> $gdExpr2) & -1)';
+				}
 			case _:
 		}
 
 		final operatorStr = OperatorHelper.binopToString(op);
 
 		// Wrap primitives with str(...) when added with String
-		if(op.isAddition()) {
-			if(checkForPrimitiveStringAddition(e1, e2)) gdExpr2 = "str(" + gdExpr2 + ")";
-			if(checkForPrimitiveStringAddition(e2, e1)) gdExpr1 = "str(" + gdExpr1 + ")";
+		if (op.isAddition()) {
+			if (checkForPrimitiveStringAddition(e1, e2))
+				gdExpr2 = "str(" + gdExpr2 + ")";
+			if (checkForPrimitiveStringAddition(e2, e1))
+				gdExpr1 = "str(" + gdExpr1 + ")";
 		}
 
 		return gdExpr1 + " " + operatorStr + " " + gdExpr2;
 	}
 
-	inline function checkForPrimitiveStringAddition(strExpr: TypedExpr, primExpr: TypedExpr) {
+	inline function checkForPrimitiveStringAddition(strExpr:TypedExpr, primExpr:TypedExpr) {
 		return strExpr.t.isString() && primExpr.t.isPrimitive();
 	}
 
-	function callToGDScript(calledExpr: TypedExpr, arguments: Array<TypedExpr>, originalExpr: TypedExpr): StringBuf {
+	function callToGDScript(calledExpr:TypedExpr, arguments:Array<TypedExpr>, originalExpr:TypedExpr):StringBuf {
 		// Check @:nativeTypeCode
 		var nfcTypes = null;
 		final originalExprType = originalExpr.t;
-		final nfc = this.compileNativeFunctionCodeMeta(calledExpr, arguments, function(index: Int) {
-			if(nfcTypes == null) nfcTypes = calledExpr.getFunctionTypeParams(originalExprType);
-			if(nfcTypes != null && index >= 0 && index < nfcTypes.length) {
+		final nfc = this.compileNativeFunctionCodeMeta(calledExpr, arguments, function(index:Int) {
+			if (nfcTypes == null)
+				nfcTypes = calledExpr.getFunctionTypeParams(originalExprType);
+			if (nfcTypes != null && index >= 0 && index < nfcTypes.length) {
 				return typeCompiler.compileType(nfcTypes[index], calledExpr.pos);
 			}
 			return null;
 		});
 
-		if(nfc != null) {
+		if (nfc != null) {
 			final result = new StringBuf();
 			result.add(nfc);
 			return result;
@@ -1260,48 +1314,48 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 
 		// Check for static std translations (Std.*, Math.*, Reflect.*, Sys.*)
 		final translatedStatic = tryTranslateStaticCall(calledExpr, arguments);
-		if(translatedStatic != null) {
+		if (translatedStatic != null) {
 			final result = new StringBuf();
 			result.add(translatedStatic);
 			return result;
 		}
 
-		// Check FieldAccess 
-		final code = switch(calledExpr.expr) {
+		// Check FieldAccess
+		final code = switch (calledExpr.expr) {
 			case TField(_, fa): {
-				switch(fa) {
-					// enum field access
-					case FEnum(_, _): {
-						compileEnumFieldCall(calledExpr, arguments);
-					}
-					// @:constructor static function
-					case FStatic(classTypeRef, _.get() => cf) if(cf.meta.maybeHas(":constructor")): {
-						newToGDScript(classTypeRef, originalExpr, arguments);
-					}
-					// Replace pad nulls with default values
-					case FInstance(clsRef, _, cfRef) | FStatic(clsRef, cfRef): {
-						switch(cfRef.get().kind) {
-							case FMethod(_): {
-								final funcData = cfRef.get().findFuncData(clsRef.get());
-								if(funcData != null) {
-									arguments = funcData.replacePadNullsWithDefaults(arguments, ":noNullPad", generateInjectionExpression);
-								}
+					switch (fa) {
+						// enum field access
+						case FEnum(_, _): {
+								compileEnumFieldCall(calledExpr, arguments);
 							}
-							case _:
-						}
-						null;
+						// @:constructor static function
+						case FStatic(classTypeRef, _.get() => cf) if (cf.meta.maybeHas(":constructor")): {
+								newToGDScript(classTypeRef, originalExpr, arguments);
+							}
+						// Replace pad nulls with default values
+						case FInstance(clsRef, _, cfRef) | FStatic(clsRef, cfRef): {
+								switch (cfRef.get().kind) {
+									case FMethod(_): {
+											final funcData = cfRef.get().findFuncData(clsRef.get());
+											if (funcData != null) {
+												arguments = funcData.replacePadNullsWithDefaults(arguments, ":noNullPad", generateInjectionExpression);
+											}
+										}
+									case _:
+								}
+								null;
+							}
+						case _: null;
 					}
-					case _: null;
 				}
-			}
 			case _: null;
 		}
 
 		final result = new StringBuf();
-		if(code != null) {
+		if (code != null) {
 			result.add(code);
 		} else {
-			final callOp = if(isCallableVar(calledExpr)) {
+			final callOp = if (isCallableVar(calledExpr)) {
 				".call(";
 			} else {
 				"(";
@@ -1315,15 +1369,15 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 		return result;
 	}
 
-	function newToGDScript(classTypeRef: Ref<ClassType>, originalExpr: TypedExpr, el: Array<TypedExpr>): String {
+	function newToGDScript(classTypeRef:Ref<ClassType>, originalExpr:TypedExpr, el:Array<TypedExpr>):String {
 		final nfc = this.compileNativeFunctionCodeMeta(originalExpr, el);
-		return if(nfc != null) {
+		return if (nfc != null) {
 			nfc;
 		} else {
 			final meta = originalExpr.getDeclarationMeta()?.meta;
-			final native = meta == null ? "" : ({ name: "", meta: meta }.getNameOrNative());
+			final native = meta == null ? "" : ({name: "", meta: meta}.getNameOrNative());
 			final args = el.map(e -> compileExpression(e)).join(", ");
-			if(native.length > 0) {
+			if (native.length > 0) {
 				native + "(" + args + ")";
 			} else {
 				final cls = classTypeRef.get();
@@ -1331,12 +1385,12 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 				final meta = cls.meta.maybeExtract(":bindings_api_type");
 
 				// Check for @:bindings_api_type("builtin_classes") metadata
-				final builtin_class = meta.filter(m -> switch(m.params) {
+				final builtin_class = meta.filter(m -> switch (m.params) {
 					case [macro "builtin_classes"]: true;
 					case _: false;
 				}).length > 0;
 
-				if(builtin_class) {
+				if (builtin_class) {
 					className + "(" + args + ")";
 				} else {
 					className + ".new(" + args + ")";
@@ -1345,17 +1399,19 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 		}
 	}
 
-	function unopToGDScript(op: Unop, e: TypedExpr, isPostfix: Bool): String {
+	function unopToGDScript(op:Unop, e:TypedExpr, isPostfix:Bool):String {
 		final gdExpr = compileExpressionOrError(e);
 
 		// OpIncrement and OpDecrement not supported in GDScript
-		switch(op) {
-			case OpIncrement: {
-				return gdExpr + " += 1";
-			}
-			case OpDecrement: {
-				return gdExpr + " -= 1";
-			}
+		switch (op) {
+			case OpIncrement:
+				{
+					return gdExpr + " += 1";
+				}
+			case OpDecrement:
+				{
+					return gdExpr + " -= 1";
+				}
 			case _:
 		}
 
@@ -1363,122 +1419,122 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 		return isPostfix ? (gdExpr + operatorStr) : (operatorStr + gdExpr);
 	}
 
-	function fieldAccessToGDScript(e: TypedExpr, fa: FieldAccess): String {
-		final nameMeta: NameAndMeta = switch(fa) {
+	function fieldAccessToGDScript(e:TypedExpr, fa:FieldAccess):String {
+		final nameMeta:NameAndMeta = switch (fa) {
 			case FInstance(_, _, classFieldRef): classFieldRef.get();
 			case FStatic(_, classFieldRef): classFieldRef.get();
 			case FAnon(classFieldRef): classFieldRef.get();
 			case FClosure(_, classFieldRef): classFieldRef.get();
 			case FEnum(_, enumField): enumField;
-			case FDynamic(s): { name: s, meta: null };
+			case FDynamic(s): {name: s, meta: null};
 		}
 
-		if(nameMeta.hasMeta(Meta.Uncompilable)) {
+		if (nameMeta.hasMeta(Meta.Uncompilable)) {
 			Context.error("Attempting to compile field marked with `@:uncompilable`.", e.pos);
 		}
 
-		return if(nameMeta.hasMeta(":native")) {
+		return if (nameMeta.hasMeta(":native")) {
 			nameMeta.getNameOrNative();
 		} else {
 			final name = nameMeta.getNameOrNativeName();
 			final name = nameMeta.hasMeta(Meta.KeepName) || nameMeta.hasMeta(Meta.NativeName) ? name : compileVarName(name);
 
-			var accessMode: AccessMode = Default;
+			var accessMode:AccessMode = Default;
 
-			switch(fa) {
+			switch (fa) {
 				// Check if this is a self.field with BypassWrapper OR a field in `bypassSelfStack`
-				case FInstance(clsRef, _, clsFieldRef) if(selfStack.length > 0 || bypassSelfStack.length > 0): {
-					final isSelfAccess = switch(e.expr) {
-						case TConst(TThis): true;
-						case _: false;
-					}
-					if(isSelfAccess) {
-						// Check selfStack
-						if(selfStack.length > 0) {
-							final isSameClass = switch(e.t) {
-								case TInst(clsRef2, _) if(clsRef.get().name == clsRef2.get().name): true;
-								case _: false;
-							}
-							if(isSameClass) {
-								final selfData = selfStack[selfStack.length - 1];
-								final field = clsFieldRef.get();
-								if(field.hasMeta(Meta.BypassWrapper) || (selfData.publicOnly && !field.isPublic)) {
-									accessMode = ForceSelf;
+				case FInstance(clsRef, _, clsFieldRef) if (selfStack.length > 0 || bypassSelfStack.length > 0): {
+						final isSelfAccess = switch (e.expr) {
+							case TConst(TThis): true;
+							case _: false;
+						}
+						if (isSelfAccess) {
+							// Check selfStack
+							if (selfStack.length > 0) {
+								final isSameClass = switch (e.t) {
+									case TInst(clsRef2, _) if (clsRef.get().name == clsRef2.get().name): true;
+									case _: false;
+								}
+								if (isSameClass) {
+									final selfData = selfStack[selfStack.length - 1];
+									final field = clsFieldRef.get();
+									if (field.hasMeta(Meta.BypassWrapper) || (selfData.publicOnly && !field.isPublic)) {
+										accessMode = ForceSelf;
+									}
 								}
 							}
-						}
 
-						// Check bypassSelfStack
-						if(accessMode == Default && bypassSelfStack.length > 0) {
-							final fieldHaxeName = clsFieldRef.get().name;
-							for(name in bypassSelfStack) {
-								if(fieldHaxeName == name) {
-									accessMode = RemoveFieldAccess;
-									break;
+							// Check bypassSelfStack
+							if (accessMode == Default && bypassSelfStack.length > 0) {
+								final fieldHaxeName = clsFieldRef.get().name;
+								for (name in bypassSelfStack) {
+									if (fieldHaxeName == name) {
+										accessMode = RemoveFieldAccess;
+										break;
+									}
 								}
 							}
 						}
 					}
-				}
 
 				// Check if this is a static variable, and if so use singleton.
 				case FStatic(clsRef, cfRef): {
-					final cls = clsRef.get();
-					final cf = cfRef.get();
-					final className = typeCompiler.compileClassName(cls);
-					switch(cf.kind) {
-						case FMethod(kind): {
-							if(kind == MethDynamic) {
-								return className + "." + name;
-							}
-						}
-						case _: {
-							// If accessing a private static var from itself, don't include the class.
-							final currentModule = getCurrentModule();
-							switch(currentModule) {
-								case TClassDecl(clsRef) if(clsRef.get().equals(cls)): {
-									return name;
+						final cls = clsRef.get();
+						final cf = cfRef.get();
+						final className = typeCompiler.compileClassName(cls);
+						switch (cf.kind) {
+							case FMethod(kind): {
+									if (kind == MethDynamic) {
+										return className + "." + name;
+									}
 								}
-								case _:
-							}
+							case _: {
+									// If accessing a private static var from itself, don't include the class.
+									final currentModule = getCurrentModule();
+									switch (currentModule) {
+										case TClassDecl(clsRef) if (clsRef.get().equals(cls)): {
+												return name;
+											}
+										case _:
+									}
+								}
 						}
 					}
-				}
 
-				// Check if this is an enum 
+				// Check if this is an enum
 				// TODO... is this correct??? I wrote this in 2022 but idk how this works??
 				// [May 2025] Update from 2025, I'm not sure why my past self was hesitant this could be wrong??? Looks good to me?
 				case FEnum(enumRef, enumField): {
-					return enumCompiler.compileExpressionFromIndex(enumRef.get(), enumField, null);
-				}
+						return enumCompiler.compileExpressionFromIndex(enumRef.get(), enumField, null);
+					}
 				case _:
 			}
 
 			// Do not use `self.` on `@:const` variables.
-			switch(fa) {
+			switch (fa) {
 				case FInstance(clsRef, _, clsFieldRef): {
-					final isSelfAccess = switch(e.expr) {
-						case TConst(TThis): true;
-						case _: false;
+						final isSelfAccess = switch (e.expr) {
+							case TConst(TThis): true;
+							case _: false;
+						}
+						if (isSelfAccess && clsFieldRef.get().hasMeta(Meta.Const)) {
+							return name;
+						}
 					}
-					if(isSelfAccess && clsFieldRef.get().hasMeta(Meta.Const)) {
-						return name;
-					}
-				}
 				case FStatic(clsRef, clsFieldRef): {
-					final isSelfAccess = switch(e.expr) {
-						case TTypeExpr(_ == getCurrentModule() => true): true;
-						case _: false;
+						final isSelfAccess = switch (e.expr) {
+							case TTypeExpr(_ == getCurrentModule() => true): true;
+							case _: false;
+						}
+						if (isSelfAccess && clsFieldRef.get().hasMeta(Meta.Const)) {
+							return name;
+						}
 					}
-					if(isSelfAccess && clsFieldRef.get().hasMeta(Meta.Const)) {
-						return name;
-					}
-				}
 				case _:
 			}
 
 			// Compile "accessed" expression
-			final gdExpr = switch(accessMode) {
+			final gdExpr = switch (accessMode) {
 				case Default: compileExpression(e);
 				case ForceSelf: "self";
 				case RemoveFieldAccess: return name;
@@ -1486,10 +1542,10 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 
 			// Check if we're accessing an anonymous type.
 			// If so, it's a Dictionary in GDScript and .get should be used.
-			switch(fa) {
+			switch (fa) {
 				case FAnon(classFieldRef): {
-					return gdExpr + ".get(\"" + classFieldRef.get().name + "\")";
-				}
+						return gdExpr + ".get(\"" + classFieldRef.get().name + "\")";
+					}
 				case _:
 			}
 
@@ -1497,31 +1553,27 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 		}
 	}
 
-	
-
 	/**
 		In GDScript, a Callable is called differently from a function.
 		To help decern whether this is a variable containing a Callable,
 		or this is a normal function/method, this function is used.
 	**/
-	function isCallableVar(e: TypedExpr) {
-		return switch(e.expr) {
+	function isCallableVar(e:TypedExpr) {
+		return switch (e.expr) {
 			case TField(_, fa): {
-				switch(fa) {
-					case FInstance(_, _, clsFieldRef) |
-						FStatic(_, clsFieldRef) |
-						FClosure(_, clsFieldRef): {
-						final clsField = clsFieldRef.get();
-						switch(clsField.kind) {
-							case FMethod(methKind): {
-								methKind == MethDynamic;
+					switch (fa) {
+						case FInstance(_, _, clsFieldRef) | FStatic(_, clsFieldRef) | FClosure(_, clsFieldRef): {
+								final clsField = clsFieldRef.get();
+								switch (clsField.kind) {
+									case FMethod(methKind): {
+											methKind == MethDynamic;
+										}
+									case _: true;
+								}
 							}
-							case _: true;
-						}
+						case _: true;
 					}
-					case _: true;
 				}
-			}
 			case TConst(c): c != TSuper;
 			case TParenthesis(e2) | TMeta(_, e2): isCallableVar(e2);
 			case _: true;
@@ -1531,27 +1583,27 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 	/**
 		Tries to translate static std calls like Std.string(), Math.abs(), etc.
 	**/
-	function tryTranslateStaticCall(calledExpr: TypedExpr, arguments: Array<TypedExpr>): Null<String> {
+	function tryTranslateStaticCall(calledExpr:TypedExpr, arguments:Array<TypedExpr>):Null<String> {
 		final argStrings = arguments.map(e -> compileExpression(e));
-		
-		return switch(calledExpr.expr) {
+
+		return switch (calledExpr.expr) {
 			case TField(_, fa): {
-				switch(fa) {
-					case FStatic(clsRef, cfRef): {
-						final cls = clsRef.get();
-						final cf = cfRef.get();
-						final className = cls.pack.join(".") + (cls.pack.length > 0 ? "." : "") + cls.name;
-						GDScriptStdTranslate.translateStaticCall(className, cf.name, argStrings);
+					switch (fa) {
+						case FStatic(clsRef, cfRef): {
+								final cls = clsRef.get();
+								final cf = cfRef.get();
+								final className = cls.pack.join(".") + (cls.pack.length > 0 ? "." : "") + cls.name;
+								GDScriptStdTranslate.translateStaticCall(className, cf.name, argStrings);
+							}
+						case FInstance(clsRef, _, cfRef): {
+								final cls = clsRef.get();
+								final cf = cfRef.get();
+								final className = cls.pack.join(".") + (cls.pack.length > 0 ? "." : "") + cls.name;
+								GDScriptStdTranslate.translateStaticCall(className, cf.name, argStrings);
+							}
+						case _: null;
 					}
-					case FInstance(clsRef, _, cfRef): {
-						final cls = clsRef.get();
-						final cf = cfRef.get();
-						final className = cls.pack.join(".") + (cls.pack.length > 0 ? "." : "") + cls.name;
-						GDScriptStdTranslate.translateStaticCall(className, cf.name, argStrings);
-					}
-					case _: null;
 				}
-			}
 			case _: null;
 		}
 	}
@@ -1561,19 +1613,18 @@ ${exitTreeLines.length > 0 ? exitTreeLines.join("\n").tab() : "\tpass"}
 		If the typed expression is an enum field, transpile as a
 		Dictionary with the enum data.
 	**/
-	function compileEnumFieldCall(e: TypedExpr, el: Array<TypedExpr>): Null<String> {
-		return switch(e.expr) {
+	function compileEnumFieldCall(e:TypedExpr, el:Array<TypedExpr>):Null<String> {
+		return switch (e.expr) {
 			case TField(_, fa): {
-				switch(fa) {
-					case FEnum(_.get() => enumType, enumField): {
-						enumCompiler.compileExpressionFromIndex(enumType, enumField, el);
+					switch (fa) {
+						case FEnum(_.get() => enumType, enumField): {
+								enumCompiler.compileExpressionFromIndex(enumType, enumField, el);
+							}
+						case _: null;
 					}
-					case _: null;
 				}
-			}
 			case _: null;
 		}
 	}
 }
-
 #end

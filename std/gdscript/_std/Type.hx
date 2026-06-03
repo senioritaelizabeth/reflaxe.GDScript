@@ -84,19 +84,29 @@ class Type {
 	}
 
 	public static function enumConstructor(e:EnumValue):String {
-		final name = untyped __gdscript__("{0}.get(\"_hx_name\")", e);
-		return if (name == null) "" else cast name;
+		// GDScriptEnum values are plain ints — no .get()
+		if (untyped __gdscript__("({0} as Variant) is Dictionary", e)) {
+			final name = untyped __gdscript__("{0}.get(\"_hx_name\")", e);
+			return if (name == null) "" else cast name;
+		}
+		return untyped __gdscript__("str({0})", e);
 	}
 
 	public static function enumParameters(e:EnumValue):Array<Dynamic> {
-		final params = untyped __gdscript__("{0}.get(\"params\")", e);
-		if (params == null)
-			return [];
-		return untyped __gdscript__("Array({0})", params);
+		if (untyped __gdscript__("({0} as Variant) is Dictionary", e)) {
+			final params = untyped __gdscript__("{0}.get(\"_params\")", e);
+			if (params == null)
+				return [];
+			return untyped __gdscript__("Array({0})", params);
+		}
+		return [];
 	}
 
 	public static function enumIndex(e:EnumValue):Int {
-		return untyped __gdscript__("{0}.get(\"index\")", e);
+		if (untyped __gdscript__("({0} as Variant) is Dictionary", e)) {
+			return untyped __gdscript__("{0}.get(\"index\")", e);
+		}
+		return untyped __gdscript__("int({0})", e);
 	}
 
 	public static function enumEq<T:EnumValue>(a:T, b:T):Bool {
@@ -104,6 +114,13 @@ class Type {
 			return true;
 		if (a == null || b == null)
 			return false;
+		// Both plain ints (GDScriptEnum) — already handled by a == b above
+		final aIsDict = untyped __gdscript__("({0} as Variant) is Dictionary", a);
+		final bIsDict = untyped __gdscript__("({0} as Variant) is Dictionary", b);
+		if (aIsDict != bIsDict)
+			return false;
+		if (!aIsDict)
+			return a == b;
 		if (enumConstructor(a) != enumConstructor(b))
 			return false;
 		final pa = enumParameters(a);
@@ -112,7 +129,6 @@ class Type {
 			return false;
 		for (i in 0...pa.length) {
 			if (!enumEq(cast pa[i], cast pb[i])) {
-				// fallback to equality
 				if (pa[i] != pb[i])
 					return false;
 			}
