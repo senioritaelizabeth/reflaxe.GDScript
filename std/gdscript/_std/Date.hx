@@ -1,89 +1,118 @@
 package;
 
 /**
-	GDScript implementation of Haxe's Date class.
-	Uses Godot's Time and DateTime APIs.
+	`Date` provides date/time functionality backed by GDScript's `Time` singleton.
 **/
-#if !macro
-@:coreApi
-#end
-@:nativeTypeCode("Dictionary")
 class Date {
-	public var fullYear(default, null): Int;
-	public var month(default, null): Int;
-	public var date(default, null): Int;
-	public var hours(default, null): Int;
-	public var minutes(default, null): Int;
-	public var seconds(default, null): Int;
+	// Stored as Unix timestamp in seconds (Float for sub-second precision)
+	private var t: Float;
 
-	var __timestamp: Float;
-
-	public function new(year: Int, month: Int, date: Int, hours: Int = 0, minutes: Int = 0, seconds: Int = 0) {
-		full_year = year;
-		this.month = month;
-		this.date = date;
-		this.hours = hours;
-		this.minutes = minutes;
-		this.seconds = seconds;
-		__timestamp = untyped __gdscript__("Time.get_unix_time_from_datetime_dict({{year: {0}, month: {1}, day: {2}, hour: {3}, minute: {4}, second: {5}}})", year, month + 1, date, hours, minutes, seconds);
+	public function new(year: Int, month: Int, day: Int, hour: Int, min: Int, sec: Int) {
+		// month is 0-based in Haxe, 1-based in GDScript
+		final dict: Dynamic = untyped __gdscript__("{\"year\": {0}, \"month\": {1}, \"day\": {2}, \"hour\": {3}, \"minute\": {4}, \"second\": {5}}",
+			year, month + 1, day, hour, min, sec);
+		t = untyped __gdscript__("Time.get_unix_time_from_datetime_dict({0})", dict);
 	}
 
-	public static function now(): Date {
-		final ts = untyped __gdscript__("Time.get_unix_time_from_system()");
-		return fromDate(ts);
-	}
-
-	public static function fromTime(t: Float): Date {
-		return fromDate(t);
-	}
-
-	public static function fromString(str: String): Date {
-		final dict = untyped __gdscript__("Time.get_datetime_dict_from_datetime_string({0}, false)", str);
-		final ts = untyped __gdscript__("Time.get_unix_time_from_datetime_dict({0})", dict);
-		return fromDate(ts);
-	}
-
-	static function fromDate(ts: Float): Date {
-		final dict = untyped __gdscript__("Time.get_datetime_dict_from_unix_time({0})", ts);
-		final d = new Date(dict.year, dict.month - 1, dict.day, dict.hour, dict.minute, dict.second);
-		d.__timestamp = ts;
+	private static function fromTime(stamp: Float): Date {
+		final d = new Date(1970, 0, 1, 0, 0, 0);
+		d.t = stamp;
 		return d;
 	}
 
+	public static function now(): Date {
+		final d = new Date(1970, 0, 1, 0, 0, 0);
+		d.t = untyped __gdscript__("Time.get_unix_time_from_system()");
+		return d;
+	}
+
+	public static function fromTime(t: Float): Date {
+		final d = new Date(1970, 0, 1, 0, 0, 0);
+		d.t = t / 1000.0; // Haxe uses milliseconds
+		return d;
+	}
+
+	public static function fromString(s: String): Date {
+		// Expected: "YYYY-MM-DD HH:MM:SS"
+		final parts = s.split(" ");
+		final dateParts = parts[0].split("-");
+		final timeParts = parts.length > 1 ? parts[1].split(":") : ["0", "0", "0"];
+		return new Date(
+			Std.parseInt(dateParts[0]),
+			Std.parseInt(dateParts[1]) - 1,
+			Std.parseInt(dateParts[2]),
+			Std.parseInt(timeParts[0]),
+			Std.parseInt(timeParts[1]),
+			Std.parseInt(timeParts[2])
+		);
+	}
+
+	private function getDict(): Dynamic {
+		return untyped __gdscript__("Time.get_datetime_dict_from_unix_time(int({0}))", t);
+	}
+
 	public function getTime(): Float {
-		return __timestamp;
+		return t * 1000.0; // Haxe returns milliseconds
 	}
 
 	public function getFullYear(): Int {
-		return full_year;
+		return untyped __gdscript__("{0}[\"year\"]", getDict());
 	}
 
 	public function getMonth(): Int {
-		return month;
+		// Haxe months are 0-based
+		return (untyped __gdscript__("{0}[\"month\"]", getDict()) : Int) - 1;
 	}
 
 	public function getDate(): Int {
-		return date;
-	}
-
-	public function getHours(): Int {
-		return hours;
-	}
-
-	public function getMinutes(): Int {
-		return minutes;
-	}
-
-	public function getSeconds(): Int {
-		return seconds;
+		return untyped __gdscript__("{0}[\"day\"]", getDict());
 	}
 
 	public function getDay(): Int {
-		final dict = untyped __gdscript__("Time.get_datetime_dict_from_unix_time({0})", __timestamp);
-		return dict.weekday - 1;
+		// weekday: 0=Sunday in Haxe, GDScript weekday: 0=Sunday too
+		return untyped __gdscript__("{0}[\"weekday\"]", getDict());
+	}
+
+	public function getHours(): Int {
+		return untyped __gdscript__("{0}[\"hour\"]", getDict());
+	}
+
+	public function getMinutes(): Int {
+		return untyped __gdscript__("{0}[\"minute\"]", getDict());
+	}
+
+	public function getSeconds(): Int {
+		return untyped __gdscript__("{0}[\"second\"]", getDict());
+	}
+
+	public function getTimezoneOffset(): Int {
+		return 0; // GDScript always returns UTC
 	}
 
 	public function toString(): String {
-		return untyped __gdscript__("Time.get_datetime_string_from_unix_time({0})", __timestamp);
+		final d = getDict();
+		final yr  = Std.string(untyped __gdscript__("{0}[\"year\"]", d));
+		final mo  = StringTools.lpad(Std.string((untyped __gdscript__("{0}[\"month\"]", d) : Int)), "0", 2);
+		final dy  = StringTools.lpad(Std.string(untyped __gdscript__("{0}[\"day\"]", d)), "0", 2);
+		final hr  = StringTools.lpad(Std.string(untyped __gdscript__("{0}[\"hour\"]", d)), "0", 2);
+		final mn  = StringTools.lpad(Std.string(untyped __gdscript__("{0}[\"minute\"]", d)), "0", 2);
+		final sc  = StringTools.lpad(Std.string(untyped __gdscript__("{0}[\"second\"]", d)), "0", 2);
+		return '$yr-$mo-$dy $hr:$mn:$sc';
+	}
+
+	public function toDateString(): String {
+		final d = getDict();
+		final yr = Std.string(untyped __gdscript__("{0}[\"year\"]", d));
+		final mo = StringTools.lpad(Std.string((untyped __gdscript__("{0}[\"month\"]", d) : Int)), "0", 2);
+		final dy = StringTools.lpad(Std.string(untyped __gdscript__("{0}[\"day\"]", d)), "0", 2);
+		return '$yr-$mo-$dy';
+	}
+
+	public function toTimeString(): String {
+		final d = getDict();
+		final hr = StringTools.lpad(Std.string(untyped __gdscript__("{0}[\"hour\"]", d)), "0", 2);
+		final mn = StringTools.lpad(Std.string(untyped __gdscript__("{0}[\"minute\"]", d)), "0", 2);
+		final sc = StringTools.lpad(Std.string(untyped __gdscript__("{0}[\"second\"]", d)), "0", 2);
+		return '$hr:$mn:$sc';
 	}
 }

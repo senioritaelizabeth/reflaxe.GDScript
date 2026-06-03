@@ -1,5 +1,5 @@
 # Test
-test/gdscript/out
+# test/gdscript/
 test/project.godot
 *.gd
 project.godot

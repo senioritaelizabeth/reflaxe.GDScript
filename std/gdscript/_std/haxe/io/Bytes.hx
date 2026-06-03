@@ -1,165 +1,76 @@
 package haxe.io;
 
-typedef BytesData = Array<Int>;
-
-/**
-	GDScript implementation of haxe.io.Bytes.
-	Uses Array<Int> for byte storage.
-**/
-@:nativeTypeCode("Array[Int]")
 class Bytes {
 	public var length(default, null): Int;
-	var b: Array<Int>;
+	private var data: Dynamic; // PackedByteArray
 
-	public function new(length: Int, ?b: Array<Int>) {
-		this.b = b != null ? b : [];
+	private function new(length: Int, data: Dynamic) {
 		this.length = length;
-	}
-
-	public static function ofString(s: String, ?encoding: Encoding): Bytes {
-		final bytes: Array<Int> = [];
-		for(i in 0...s.length) {
-			bytes.push(s.charCodeAt(i));
-		}
-		return new Bytes(bytes.length, bytes);
-	}
-
-	public static function ofData(data: Array<Int>): Bytes {
-		return new Bytes(data.length, data);
-	}
-
-	public static function alloc(length: Int): Bytes {
-		final b: Array<Int> = [];
-		for(i in 0...length) b.push(0);
-		return new Bytes(length, b);
-	}
-
-	public static function readBytes(bytes: Bytes, pos: Int, len: Int): Bytes {
-		final result: Array<Int> = [];
-		for(i in pos...pos + len) {
-			result.push(bytes.b[i]);
-		}
-		return new Bytes(len, result);
-	}
-
-	public static function fastCompare(bytes1: Bytes, bytes2: Bytes, ?maxBytes: Int = 8192): Int {
-		final len = maxBytes < bytes1.length ? maxBytes : bytes1.length;
-		for(i in 0...len) {
-			if(bytes1.get(i) != bytes2.get(i)) {
-				return bytes1.get(i) - bytes2.get(i);
-			}
-		}
-		return bytes1.length - bytes2.length;
-	}
-
-	public function compare(other: Bytes): Int {
-		final len = this.length < other.length ? this.length : other.length;
-		for(i in 0...len) {
-			if(this.get(i) != other.get(i)) {
-				return this.get(i) - other.get(i);
-			}
-		}
-		return this.length - other.length;
+		this.data = data;
 	}
 
 	public function get(pos: Int): Int {
-		return b[pos];
-	}
-
-	@:noCompletion
-	public function fastGet(pos: Int): Int {
-		return b[pos];
+		return untyped __gdscript__("{0}[{1}]", data, pos);
 	}
 
 	public function set(pos: Int, v: Int): Void {
-		b[pos] = v;
+		untyped __gdscript__("{0}[{1}] = {2}", data, pos, v & 0xFF);
 	}
 
-	public function blit(pos: Int, src: Bytes, srcpos: Int, len: Int): Void {
-		for(i in 0...len) {
-			b[pos + i] = src.b[srcpos + i];
-		}
-	}
-
-	public function sub(pos: Int, len: Int): Bytes {
-		return readBytes(this, pos, len);
+	public function blit(pos: Int, src: Bytes, srcPos: Int, len: Int): Void {
+		for (i in 0...len) set(pos + i, src.get(srcPos + i));
 	}
 
 	public function fill(pos: Int, len: Int, value: Int): Void {
-		for(i in pos...pos + len) {
-			b[i] = value;
-		}
+		for (i in 0...len) set(pos + i, value);
 	}
 
-	public function toString(): String {
-		var result = "";
-		for(i in 0...length) {
-			result += String.fromCharCode(get(i));
+	public function sub(pos: Int, len: Int): Bytes {
+		final newData = untyped __gdscript__("{0}.slice({1}, {2})", data, pos, pos + len);
+		return new Bytes(len, newData);
+	}
+
+	public function compare(other: Bytes): Int {
+		final len = length < other.length ? length : other.length;
+		for (i in 0...len) {
+			final a = get(i);
+			final b = other.get(i);
+			if (a != b) return a - b;
 		}
-		return result;
+		return length - other.length;
 	}
 
 	public function getString(pos: Int, len: Int, ?encoding: Encoding): String {
-		var result = "";
-		for(i in pos...pos + len) {
-			result += String.fromCharCode(get(i));
-		}
-		return result;
+		final sub = untyped __gdscript__("{0}.slice({1}, {2})", data, pos, pos + len);
+		return untyped __gdscript__("{0}.get_string_from_utf8()", sub);
 	}
 
-	public function readString(pos: Int, len: Int): String {
-		return getString(pos, len);
+	public function toString(): String {
+		return getString(0, length);
 	}
 
 	public function toHex(): String {
+		final hex = "0123456789abcdef";
 		var result = "";
-		final hexChars = "0123456789abcdef";
-		for(i in 0...length) {
+		for (i in 0...length) {
 			final v = get(i);
-			result += hexChars.charAt((v >> 4) & 0xF) + hexChars.charAt(v & 0xF);
+			result += hex.charAt(v >> 4) + hex.charAt(v & 0xF);
 		}
 		return result;
 	}
 
-	public function getData(): BytesData {
-		return cast b;
-	}
-
-	public function getDouble(pos: Int): Float {
-		throw "Bytes.getDouble not implemented for GDScript.";
-		return 0.0;
-	}
-
-	public function getFloat(pos: Int): Float {
-		throw "Bytes.getFloat not implemented for GDScript.";
-		return 0.0;
-	}
-
 	public function getInt32(pos: Int): Int {
-		final ch1 = get(pos);
-		final ch2 = get(pos + 1);
-		final ch3 = get(pos + 2);
-		final ch4 = get(pos + 3);
-		return (ch4 << 24) | (ch3 << 16) | (ch2 << 8) | ch1;
+		final a = get(pos);
+		final b = get(pos + 1);
+		final c = get(pos + 2);
+		final d = get(pos + 3);
+		return a | (b << 8) | (c << 16) | (d << 24);
 	}
 
-	public function getInt64(pos: Int): haxe.Int64 {
-		throw "Bytes.getInt64 not implemented for GDScript.";
-		return 0;
-	}
-
-	public function getUInt16(pos: Int): Int {
-		final ch1 = get(pos);
-		final ch2 = get(pos + 1);
-		return (ch2 << 8) | ch1;
-	}
-
-	public function setDouble(pos: Int, v: Float): Void {
-		throw "Bytes.setDouble not implemented for GDScript.";
-	}
-
-	public function setFloat(pos: Int, v: Float): Void {
-		throw "Bytes.setFloat not implemented for GDScript.";
+	public function getInt16(pos: Int): Int {
+		final a = get(pos);
+		final b = get(pos + 1);
+		return a | (b << 8);
 	}
 
 	public function setInt32(pos: Int, v: Int): Void {
@@ -169,23 +80,59 @@ class Bytes {
 		set(pos + 3, (v >> 24) & 0xFF);
 	}
 
-	public function setInt64(pos: Int, v: haxe.Int64): Void {
-		throw "Bytes.setInt64 not implemented for GDScript.";
-	}
-
-	public function setUInt16(pos: Int, v: Int): Void {
+	public function setInt16(pos: Int, v: Int): Void {
 		set(pos, v & 0xFF);
 		set(pos + 1, (v >> 8) & 0xFF);
 	}
 
-	public static function ofHex(s: String): Bytes {
-		final bytes: Array<Int> = [];
-		var i = 0;
-		while(i < s.length) {
-			final hex = s.substr(i, 2);
-			bytes.push(untyped __gdscript__("int(\"{0}\", 16)", hex));
-			i += 2;
+	public function getFloat(pos: Int): Float {
+		// Pack bytes into float using GDScript
+		final sub = untyped __gdscript__("{0}.slice({1}, {2})", data, pos, pos + 4);
+		return untyped __gdscript__("{0}.decode_float(0)", sub);
+	}
+
+	public function getDouble(pos: Int): Float {
+		final sub = untyped __gdscript__("{0}.slice({1}, {2})", data, pos, pos + 8);
+		return untyped __gdscript__("{0}.decode_double(0)", sub);
+	}
+
+	public function setFloat(pos: Int, v: Float): Void {
+		final enc: Dynamic = untyped __gdscript__("PackedByteArray()");
+		untyped __gdscript__("{0}.resize(4)", enc);
+		untyped __gdscript__("{0}.encode_float(0, {1})", enc, v);
+		for (i in 0...4) set(pos + i, untyped __gdscript__("{0}[{1}]", enc, i));
+	}
+
+	public function setDouble(pos: Int, v: Float): Void {
+		final enc: Dynamic = untyped __gdscript__("PackedByteArray()");
+		untyped __gdscript__("{0}.resize(8)", enc);
+		untyped __gdscript__("{0}.encode_double(0, {1})", enc, v);
+		for (i in 0...8) set(pos + i, untyped __gdscript__("{0}[{1}]", enc, i));
+	}
+
+	public static function alloc(length: Int): Bytes {
+		final data: Dynamic = untyped __gdscript__("PackedByteArray()");
+		untyped __gdscript__("{0}.resize({1})", data, length);
+		untyped __gdscript__("{0}.fill(0)", data);
+		return new Bytes(length, data);
+	}
+
+	public static function ofString(s: String, ?encoding: Encoding): Bytes {
+		final data: Dynamic = untyped __gdscript__("{0}.to_utf8_buffer()", s);
+		final len: Int = untyped __gdscript__("{0}.size()", data);
+		return new Bytes(len, data);
+	}
+
+	public static function ofHex(hex: String): Bytes {
+		final len = Std.int(hex.length / 2);
+		final bytes = alloc(len);
+		for (i in 0...len) {
+			final high = hex.charCodeAt(i * 2);
+			final low = hex.charCodeAt(i * 2 + 1);
+			final hv = high < 58 ? high - 48 : (high < 71 ? high - 55 : high - 87);
+			final lv = low < 58 ? low - 48 : (low < 71 ? low - 55 : low - 87);
+			bytes.set(i, (hv << 4) | lv);
 		}
-		return new Bytes(bytes.length, bytes);
+		return bytes;
 	}
 }

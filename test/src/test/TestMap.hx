@@ -12,7 +12,7 @@ class TestMap {
 		map.set("bar", 2);
 		map.set("baz", 3);
 		var dynmap:Dynamic = map;
-		var map2:haxe.Constraints.IMap<Dynamic,Dynamic> = dynmap;
+		var map2:haxe.Constraints.IMap<Dynamic, Dynamic> = dynmap;
 		var map3:haxe.Constraints.IMap<String, Dynamic> = dynmap;
 		var map4:haxe.Constraints.IMap<String, Int> = dynmap;
 		assert((map is haxe.ds.StringMap) == true);
@@ -62,14 +62,13 @@ class TestMap {
 		assert(map.exists("baz") == true);
 		assert(map.get("bar") == null);
 
-		var map3 = [1=>"2",2=>"4",3=>"6"];
-		var keys = [for (k=>v in map3) k];
+		var map3 = [1 => "2", 2 => "4", 3 => "6"];
+		var keys = [for (k => v in map3) k];
 		keys.sort(Reflect.compare);
-		assert(keys == [1,2,3]);
-		var values = [for (k=>v in map3) v];
+		assert(keys == [1, 2, 3]);
+		var values = [for (k => v in map3) v];
 		values.sort(Reflect.compare);
-		assert(values == ["2","4","6"]);
-
+		assert(values == ["2", "4", "6"]);
 
 		// Int
 		var map = new Map();
@@ -119,13 +118,13 @@ class TestMap {
 		assert(map.exists(3) == true);
 		assert(map.get(2) == null);
 
-		var map3 = [1=>2,2=>4,3=>6];
-		var keys = [for (k=>v in map3) k];
+		var map3 = [1 => 2, 2 => 4, 3 => 6];
+		var keys = [for (k => v in map3) k];
 		keys.sort(Reflect.compare);
-		assert(keys == [1,2,3]);
-		var values = [for (k=>v in map3) v];
+		assert(keys == [1, 2, 3]);
+		var values = [for (k => v in map3) v];
 		values.sort(Reflect.compare);
-		assert(values == [2,4,6]);
+		assert(values == [2, 4, 6]);
 
 		// Hashable
 		var map = new Map();
@@ -144,14 +143,14 @@ class TestMap {
 		assert(map.get(b) == 2);
 		assert(map.get(c) == 3);
 
-		var keys = [for (k=>v in map) k];
-		assert([a,b,c].contains(keys[0]));
-		assert([a,b,c].contains(keys[1]));
-		assert([a,b,c].contains(keys[2]));
-		var values = [for (k=>v in map) v];
-		assert([1,2,3].contains(values[0]));
-		assert([1,2,3].contains(values[1]));
-		assert([1,2,3].contains(values[2]));
+		var keys = [for (k => v in map) k];
+		assert([a, b, c].contains(keys[0]));
+		assert([a, b, c].contains(keys[1]));
+		assert([a, b, c].contains(keys[2]));
+		var values = [for (k => v in map) v];
+		assert([1, 2, 3].contains(values[0]));
+		assert([1, 2, 3].contains(values[1]));
+		assert([1, 2, 3].contains(values[2]));
 
 		var copied = map.copy();
 		assert(copied != map);
@@ -203,14 +202,14 @@ class TestMap {
 		assert(map.get(b) == 2);
 		assert(map.get(c) == 3);
 
-		var keys = [for (k=>v in map) k];
-		assert([a,b,c].contains(keys[0]));
-		assert([a,b,c].contains(keys[1]));
-		assert([a,b,c].contains(keys[2]));
-		var values = [for (k=>v in map) v];
-		assert([1,2,3].contains(values[0]));
-		assert([1,2,3].contains(values[1]));
-		assert([1,2,3].contains(values[2]));
+		var keys = [for (k => v in map) k];
+		assert([a, b, c].contains(keys[0]));
+		assert([a, b, c].contains(keys[1]));
+		assert([a, b, c].contains(keys[2]));
+		var values = [for (k => v in map) v];
+		assert([1, 2, 3].contains(values[0]));
+		assert([1, 2, 3].contains(values[1]));
+		assert([1, 2, 3].contains(values[2]));
 
 		var copied = map.copy();
 		assert(copied != map);
@@ -266,11 +265,11 @@ class TestMap {
 		assert(['' => ''].iterator().next() == '');
 		assert([2 => 3].keys().next() == 2);
 		assert([2 => 3].iterator().next() == 3);
-		//[a => b].keys().next() == a);
-		//[a => b].iterator().next() == b);
+		// [a => b].keys().next() == a);
+		// [a => b].iterator().next() == b);
 
 		var map:Map<String, Int>;
-		HelperMacros.typedAs((null : Map<String, Int>), map = []);
+		HelperMacros.typedAs((null : Map<String, Int>), map = new Map());
 		assert(HelperMacros.typeError(map[1] = 1) == true);
 
 		assert(['' => ''].keyValueIterator().next().key == '');
@@ -280,58 +279,56 @@ class TestMap {
 
 		// Test unification
 
-		var map = [1=>"2",2=>"4"];
+		var map = [1 => "2", 2 => "4"];
 		var iterable:KeyValueIterable<Int, String> = map;
-		var values = [for(kv in iterable.keyValueIterator()) kv.value];
-		assert(["2","4"].contains(values[0]));
-		assert(["2","4"].contains(values[1]));
+		var values = [for (kv in iterable.keyValueIterator()) kv.value];
+		assert(["2", "4"].contains(values[0]));
+		assert(["2", "4"].contains(values[1]));
 
-		var iterator:KeyValueIterator<Int,String> = iterable.keyValueIterator();
-		var keys = [for(kv in iterator) kv.key];
-		assert([1,2].contains(keys[0]));
-		assert([1,2].contains(keys[1]));
-
+		var iterator:KeyValueIterator<Int, String> = iterable.keyValueIterator();
+		var keys = [for (kv in iterator) kv.key];
+		assert([1, 2].contains(keys[0]));
+		assert([1, 2].contains(keys[1]));
 
 		// Test through Dynamic
 
-		var map = [1=>"2",2=>"4"];
+		var map = [1 => "2", 2 => "4"];
 		var dyn:Dynamic = map;
 		var it = dyn.iterator();
 		var it:Iterator<String> = cast it;
-		var values = [for(v in it) v];
-		assert(["2","4"].contains(values[0]));
-		assert(["2","4"].contains(values[1]));
+		var values = [for (v in it) v];
+		assert(["2", "4"].contains(values[0]));
+		assert(["2", "4"].contains(values[1]));
 
 		var it = dyn.keyValueIterator();
-		var it:KeyValueIterator<Int,String> = cast it;
-		var values = [for(kv in it) kv.value];
-		assert(["2","4"].contains(values[0]));
-		assert(["2","4"].contains(values[1]));
+		var it:KeyValueIterator<Int, String> = cast it;
+		var values = [for (kv in it) kv.value];
+		assert(["2", "4"].contains(values[0]));
+		assert(["2", "4"].contains(values[1]));
 		var it = dyn.keyValueIterator();
-		var it:KeyValueIterator<Int,String> = cast it;
-		var keys = [for(kv in it) kv.key];
-		assert([1,2].contains(keys[0]));
-		assert([1,2].contains(keys[1]));
+		var it:KeyValueIterator<Int, String> = cast it;
+		var keys = [for (kv in it) kv.key];
+		assert([1, 2].contains(keys[0]));
+		assert([1, 2].contains(keys[1]));
 
-
-		var map = ["1a"=>"2","1b"=> "4"];
+		var map = ["1a" => "2", "1b" => "4"];
 		var dyn:Dynamic = map;
 		var it = dyn.iterator();
 		var it:Iterator<String> = cast it;
-		var values = [for(v in it) v];
-		assert(["2","4"].contains(values[0]));
-		assert(["2","4"].contains(values[1]));
+		var values = [for (v in it) v];
+		assert(["2", "4"].contains(values[0]));
+		assert(["2", "4"].contains(values[1]));
 
 		var it = dyn.keyValueIterator();
-		var it:KeyValueIterator<String,String> = cast it;
-		var values = [for(kv in it) kv.value];
-		assert(["2","4"].contains(values[0]));
-		assert(["2","4"].contains(values[1]));
+		var it:KeyValueIterator<String, String> = cast it;
+		var values = [for (kv in it) kv.value];
+		assert(["2", "4"].contains(values[0]));
+		assert(["2", "4"].contains(values[1]));
 
 		var it = dyn.keyValueIterator();
-		var it:KeyValueIterator<String,String> = cast it;
-		var keys = [for(kv in it) kv.key];
-		assert(["1a","1b"].contains(keys[0]));
-		assert(["1a","1b"].contains(keys[1]));
+		var it:KeyValueIterator<String, String> = cast it;
+		var keys = [for (kv in it) kv.key];
+		assert(["1a", "1b"].contains(keys[0]));
+		assert(["1a", "1b"].contains(keys[1]));
 	}
 }

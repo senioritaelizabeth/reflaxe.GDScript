@@ -1,4 +1,3 @@
--lib gdscript
 -cp src
 
 -D gdscript-output=godot_project/gdscript/out

@@ -1,86 +1,96 @@
 package haxe.io;
 
-/**
-	GDScript implementation of haxe.io.Output.
-**/
 class Output {
-	public function new() {}
+	public var bigEndian: Bool = false;
 
 	public function writeByte(c: Int): Void {
-		throw "Output.writeByte not implemented for GDScript.";
+		throw Error.Custom("Not implemented");
 	}
 
 	public function writeBytes(s: Bytes, pos: Int, len: Int): Int {
-		throw "Output.writeBytes not implemented for GDScript.";
-		return 0;
+		var k = len;
+		while (k > 0) {
+			writeByte(s.get(pos));
+			pos++;
+			k--;
+		}
+		return len;
 	}
 
-	public function write(s: Bytes): Void {
-		var p = 0;
-		final l = s.length;
-		while(p < l) {
-			p += writeBytes(s, p, l - p);
-		}
-	}
+	public function flush(): Void {}
+
+	public function close(): Void {}
 
 	public function writeFullBytes(s: Bytes, pos: Int, len: Int): Void {
-		var p = pos;
-		while(len > 0) {
-			final k = writeBytes(s, p, len);
-			p += k;
+		while (len > 0) {
+			final k = writeBytes(s, pos, len);
+			pos += k;
 			len -= k;
 		}
 	}
 
-	public function writeInt8(value: Int): Void {
-		writeByte(value);
-	}
-
-	public function writeUInt8(value: Int): Void {
-		writeByte(value);
-	}
-
-	public function writeInt16(value: Int): Void {
-		writeByte(value & 0xFF);
-		writeByte((value >> 8) & 0xFF);
-	}
-
-	public function writeUInt16(value: Int): Void {
-		writeInt16(value);
-	}
-
-	public function writeInt24(value: Int): Void {
-		writeByte(value & 0xFF);
-		writeByte((value >> 8) & 0xFF);
-		writeByte((value >> 16) & 0xFF);
-	}
-
-	public function writeInt32(value: Int): Void {
-		writeByte(value & 0xFF);
-		writeByte((value >> 8) & 0xFF);
-		writeByte((value >> 16) & 0xFF);
-		writeByte((value >> 24) & 0xFF);
-	}
-
-	public function writeSingle(value: Float): Void {
-		throw "Output.writeSingle not implemented for GDScript.";
-	}
-
-	public function writeDouble(value: Float): Void {
-		throw "Output.writeDouble not implemented for GDScript.";
-	}
-
-	public function writeFloat(value: Float): Void {
-		writeSingle(value);
+	public function write(s: Bytes): Void {
+		writeFullBytes(s, 0, s.length);
 	}
 
 	public function writeString(s: String, ?encoding: Encoding): Void {
-		write(Bytes.ofString(s, encoding));
+		final bytes = Bytes.ofString(s, encoding);
+		write(bytes);
 	}
 
-	public function prepare(nbytes: Int): Void {}
+	public function writeInt8(x: Int): Void {
+		writeByte(x & 0xFF);
+	}
 
-	public function close(): Void {}
+	public function writeInt16(x: Int): Void {
+		if (bigEndian) {
+			writeByte((x >> 8) & 0xFF);
+			writeByte(x & 0xFF);
+		} else {
+			writeByte(x & 0xFF);
+			writeByte((x >> 8) & 0xFF);
+		}
+	}
 
-	public function flush(): Void {}
+	public function writeUInt16(x: Int): Void {
+		writeInt16(x);
+	}
+
+	public function writeInt24(x: Int): Void {
+		if (bigEndian) {
+			writeByte((x >> 16) & 0xFF);
+			writeByte((x >> 8) & 0xFF);
+			writeByte(x & 0xFF);
+		} else {
+			writeByte(x & 0xFF);
+			writeByte((x >> 8) & 0xFF);
+			writeByte((x >> 16) & 0xFF);
+		}
+	}
+
+	public function writeInt32(x: Int): Void {
+		if (bigEndian) {
+			writeByte((x >> 24) & 0xFF);
+			writeByte((x >> 16) & 0xFF);
+			writeByte((x >> 8) & 0xFF);
+			writeByte(x & 0xFF);
+		} else {
+			writeByte(x & 0xFF);
+			writeByte((x >> 8) & 0xFF);
+			writeByte((x >> 16) & 0xFF);
+			writeByte((x >> 24) & 0xFF);
+		}
+	}
+
+	public function writeFloat(x: Float): Void {
+		final b = Bytes.alloc(4);
+		b.setFloat(0, x);
+		write(b);
+	}
+
+	public function writeDouble(x: Float): Void {
+		final b = Bytes.alloc(8);
+		b.setDouble(0, x);
+		write(b);
+	}
 }

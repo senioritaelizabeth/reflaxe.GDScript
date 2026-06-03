@@ -1,35 +1,26 @@
 package haxe.io;
 
-/**
-	GDScript implementation of haxe.io.BytesInput.
-**/
 class BytesInput extends Input {
+	public var position: Int;
 	var b: Bytes;
-	var pos: Int;
-	var len: Int;
+	public var length: Int;
 
-	public function new(b: Bytes, ?pos: Int, ?len: Int) {
-		super();
+	public function new(b: Bytes, pos: Int = 0, ?len: Int) {
 		this.b = b;
-		this.pos = pos != null ? pos : 0;
-		this.len = len != null ? len : b.length - this.pos;
+		this.position = pos;
+		this.length = len == null ? b.length - pos : len;
 	}
 
-	public override function readByte(): Int {
-		if(pos >= b.length) throw new Eof();
-		return b.get(pos++);
+	override public function readByte(): Int {
+		if (position >= length) throw new Eof();
+		return b.get(position++);
 	}
 
-	public override function readBytes(s: Bytes, pos: Int, len: Int): Int {
-		if(this.pos >= b.length) throw new Eof();
-		final available = b.length - this.pos;
-		final toRead = len < available ? len : available;
-		for(i in 0...toRead) {
-			s.set(pos + i, b.get(this.pos + i));
-		}
-		this.pos += toRead;
-		return toRead;
+	override public function readBytes(s: Bytes, pos: Int, len: Int): Int {
+		if (position + len > length) len = length - position;
+		if (len == 0) throw new Eof();
+		s.blit(pos, b, position, len);
+		position += len;
+		return len;
 	}
-
-	public override function close(): Void {}
 }

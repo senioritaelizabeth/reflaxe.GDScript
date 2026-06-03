@@ -1,123 +1,130 @@
 package haxe.io;
 
-/**
-	GDScript implementation of haxe.io.Input.
-**/
 class Input {
-	public function new() {}
+	public var bigEndian: Bool = false;
 
 	public function readByte(): Int {
-		throw "Input.readByte not implemented for GDScript.";
+		throw Error.Custom("Not implemented");
 		return 0;
 	}
 
 	public function readBytes(s: Bytes, pos: Int, len: Int): Int {
-		throw "Input.readBytes not implemented for GDScript.";
-		return 0;
+		var k = len;
+		while (k > 0) {
+			s.set(pos, readByte());
+			pos++;
+			k--;
+		}
+		return len;
 	}
 
+	public function close(): Void {}
+
 	public function readAll(?bufsize: Int): Bytes {
-		final buf = new BytesBuffer();
+		final buf = Bytes.alloc(bufsize == null ? 16384 : bufsize);
+		final bb = new BytesBuffer();
+		var nbytes = 0;
 		try {
-			while(true) {
-				buf.addByte(readByte());
+			while (true) {
+				nbytes = readBytes(buf, 0, buf.length);
+				bb.addSub(buf, 0, nbytes);
 			}
-		} catch(e: Eof) {}
-		return buf.getBytes();
+		} catch(e: haxe.io.Eof) {}
+		return bb.getBytes();
 	}
 
 	public function readFullBytes(s: Bytes, pos: Int, len: Int): Void {
-		var p = pos;
-		while(len > 0) {
-			final k = readBytes(s, p, len);
-			p += k;
+		while (len > 0) {
+			final k = readBytes(s, pos, len);
+			pos += k;
 			len -= k;
 		}
 	}
 
-	public function readInt8(): Int {
-		return readByte();
+	public function read(nbytes: Int): Bytes {
+		final s = Bytes.alloc(nbytes);
+		readFullBytes(s, 0, nbytes);
+		return s;
 	}
 
-	public function readUInt8(): Int {
-		return readByte();
-	}
-
-	public function readInt16(): Int {
-		final ch1 = readByte();
-		final ch2 = readByte();
-		return (ch2 << 8) | ch1;
-	}
-
-	public function readUInt16(): Int {
-		return readInt16();
-	}
-
-	public function readInt24(): Int {
-		final ch1 = readByte();
-		final ch2 = readByte();
-		final ch3 = readByte();
-		return (ch3 << 16) | (ch2 << 8) | ch1;
-	}
-
-	public function readInt32(): Int {
-		final ch1 = readByte();
-		final ch2 = readByte();
-		final ch3 = readByte();
-		final ch4 = readByte();
-		return (ch4 << 24) | (ch3 << 16) | (ch2 << 8) | ch1;
-	}
-
-	public function readSingle(): Float {
-		throw "Input.readSingle not implemented for GDScript.";
-		return 0.0;
-	}
-
-	public function readDouble(): Float {
-		throw "Input.readDouble not implemented for GDScript.";
-		return 0.0;
-	}
-
-	public function readFloat(): Float {
-		return readSingle();
+	public function readString(len: Int, ?encoding: Encoding): String {
+		final b = Bytes.alloc(len);
+		readFullBytes(b, 0, len);
+		return b.getString(0, len, encoding);
 	}
 
 	public function readLine(): String {
-		var buf = "";
-		var lastWasCR = false;
-		try {
-			while(true) {
-				final c = readByte();
-				if(c == 10) {
-					if(lastWasCR) buf = buf.substr(0, buf.length - 1);
-					break;
-				}
-				if(c != 13) {
-					buf += String.fromCharCode(c);
-					lastWasCR = false;
-				} else {
-					buf += String.fromCharCode(c);
-					lastWasCR = true;
-				}
-			}
-		} catch(e: Eof) {
-			if(lastWasCR) buf = buf.substr(0, buf.length - 1);
-		}
-		return buf;
-	}
-
-	public function read(?nbytes: Null<Int>): String {
-		if(nbytes == null) return readAll().toString();
-		final buf = new BytesBuffer();
-		var i = 0;
-		while(i < nbytes) {
+		var buf = new StringBuf();
+		var last: Null<Int> = null;
+		var b = 0;
+		while (true) {
 			try {
-				buf.addByte(readByte());
-			} catch(e: Eof) break;
-			i++;
+				b = readByte();
+			} catch(e: haxe.io.Eof) {
+				if (last == null) throw e;
+				break;
+			}
+			if (b == 13) {
+				last = b;
+			} else if (b == 10) {
+				break;
+			} else {
+				if (last == 13) buf.addChar(last);
+				last = null;
+				buf.addChar(b);
+			}
 		}
-		return buf.getBytes().toString();
+		return buf.toString();
 	}
 
-	public function close(): Void {}
+	public function readInt8(): Int {
+		final n = readByte();
+		return if (n >= 128) n - 256 else n;
+	}
+
+	public function readInt16(): Int {
+		final a = readByte();
+		final b = readByte();
+		final n = if (bigEndian) (a << 8) | b else (b << 8) | a;
+		return if (n >= 32768) n - 65536 else n;
+	}
+
+	public function readUInt16(): Int {
+		final a = readByte();
+		final b = readByte();
+		return if (bigEndian) (a << 8) | b else (b << 8) | a;
+	}
+
+	public function readInt24(): Int {
+		final a = readByte();
+		final b = readByte();
+		final c = readByte();
+		final n = if (bigEndian) (a << 16) | (b << 8) | c else (c << 16) | (b << 8) | a;
+		return if (n >= 8388608) n - 16777216 else n;
+	}
+
+	public function readUInt24(): Int {
+		final a = readByte();
+		final b = readByte();
+		final c = readByte();
+		return if (bigEndian) (a << 16) | (b << 8) | c else (c << 16) | (b << 8) | a;
+	}
+
+	public function readInt32(): Int {
+		final a = readByte();
+		final b = readByte();
+		final c = readByte();
+		final d = readByte();
+		return if (bigEndian) (a << 24) | (b << 16) | (c << 8) | d else (d << 24) | (c << 16) | (b << 8) | a;
+	}
+
+	public function readFloat(): Float {
+		final bytes = read(4);
+		return bytes.getFloat(0);
+	}
+
+	public function readDouble(): Float {
+		final bytes = read(8);
+		return bytes.getDouble(0);
+	}
 }

@@ -18,7 +18,7 @@ class TestAll {
 		TestMap.test();
 		TestAbstractClass.test();
 		TestStringTools.test();
-
+		TestType.test();
 		trace("Tests successful!!");
 	}
 }
